@@ -1,11 +1,13 @@
 import {
   ChatInputApplicationCommandData,
   CommandInteraction,
-} from "discord.js";
-import hello from "./commands/hello";
+} from 'discord.js';
+import hello from './commands/hello';
+import findGame from './commands/findGame';
 
 export const enum CommandName {
-  Hello = "hello",
+  Hello = 'hello',
+  FindGame = 'find',
 }
 
 export interface Command extends ChatInputApplicationCommandData {
@@ -13,4 +15,4 @@ export interface Command extends ChatInputApplicationCommandData {
   name: CommandName;
 }
 
-export const Commands: Command[] = [hello];
+export const Commands: Command[] = [hello, findGame];

@@ -4,24 +4,26 @@ import {
   CommandInteraction,
   Events,
   Interaction,
-} from "discord.js";
-import { findCommandByName } from "../utils/commandUtils";
-import { Command } from "../Command";
+} from 'discord.js';
+import { findCommandByName } from '../utils/commandUtils';
+import { Command } from '../Command';
 
 const handleCommand = async (
   command: Command,
-  interaction: CommandInteraction
+  interaction: CommandInteraction,
 ): Promise<void> => {
   try {
     await command.run(interaction);
-  } catch (error) {
+  }
+  catch (error) {
     console.error(error);
     if (interaction.replied || interaction.deferred) {
       await interaction.followUp({
         content: `There was an error while executing ${interaction?.commandName}!`,
         ephemeral: true,
       });
-    } else {
+    }
+    else {
       await interaction.reply({
         content: `There was an error while executing ${interaction?.commandName}!`,
         ephemeral: true,
@@ -44,7 +46,7 @@ export default (client: Client): void => {
 
     if (!command) {
       console.error(
-        `No command matching ${interaction.commandName} was found.`
+        `No command matching ${interaction.commandName} was found.`,
       );
       return;
     }
