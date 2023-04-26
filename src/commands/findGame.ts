@@ -13,7 +13,6 @@ const fetchSteamApps = async (query: string): Promise<App[]> => {
     );
     const data = await response.json();
     const apps: App[] = data?.applist?.apps;
-    console.log('return from steam', apps);
     if (!Array.isArray(apps)) {
       return [];
     }
@@ -39,6 +38,12 @@ const findGame: Command = {
     const query = interaction.options.get('query')?.value;
     console.log('Looking for game with query', query);
 
+    // Initial answer (to prevent timeout)
+    await interaction.reply({
+      ephemeral: true,
+      content: `Looking for "${query}" in the Steam store ...`,
+    });
+
     if (typeof query !== 'string') {
       return;
     }
@@ -48,7 +53,7 @@ const findGame: Command = {
 
       // no game found
       if (apps?.length === 0) {
-        await interaction.reply({
+        await interaction.followUp({
           ephemeral: true,
           content: `Sorry, I wasn't able to find "${query}" in the Steam store :sweat:.`,
         });
@@ -57,7 +62,7 @@ const findGame: Command = {
 
       // single game found
       if (apps?.length === 1) {
-        await interaction.reply({
+        await interaction.followUp({
           ephemeral: true,
           content: `I've found ${apps[0]?.name} in the steam store!`,
         });
@@ -66,13 +71,13 @@ const findGame: Command = {
 
       // multiple games found
       const appNames = apps.map((app) => app?.name).join(', ');
-      await interaction.reply({
+      await interaction.followUp({
         ephemeral: true,
         content: `I've found ${apps.length} games that match your query, which one are you looking for? ${appNames}`,
       });
     }
     catch (e) {
-      await interaction.reply({
+      await interaction.followUp({
         ephemeral: true,
         content: `Ran into an error: ${e}`,
       });
