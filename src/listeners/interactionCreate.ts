@@ -5,7 +5,7 @@ import {
   Events,
   Interaction,
 } from 'discord.js';
-import { findCommandByName } from '../utils/commandUtils';
+import { findCommandByName, logCommand } from '../utils/commandUtils';
 import { Command } from '../Command';
 
 const handleCommand = async (
@@ -13,6 +13,7 @@ const handleCommand = async (
   interaction: CommandInteraction,
 ): Promise<void> => {
   try {
+    logCommand(interaction);
     await command.run(interaction);
   }
   catch (error) {
