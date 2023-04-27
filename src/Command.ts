@@ -15,4 +15,4 @@ export interface Command extends ChatInputApplicationCommandData {
   name: CommandName;
 }
 
-export const Commands: Command[] = [hello, findGame];
+export const commands: Command[] = [hello, findGame];

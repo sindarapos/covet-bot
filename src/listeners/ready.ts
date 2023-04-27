@@ -1,5 +1,5 @@
 import { Client, ClientApplication } from 'discord.js';
-import { Commands } from '../Command';
+import { commands } from '../Command';
 
 export default (client: Client): void => {
   client.on('ready', async () => {
@@ -12,7 +12,7 @@ export default (client: Client): void => {
     }
 
     console.log('Registering commands ...');
-    await client.application.commands.set(Commands);
+    await client.application.commands.set(commands);
 
     console.log(`${client.user?.username} is online`);
   });

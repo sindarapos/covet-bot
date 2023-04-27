@@ -1,8 +1,8 @@
-import { Commands } from '../Command';
+import { commands } from '../Command';
 import { CommandInteraction } from 'discord.js';
 
 export const findCommandByName = (name: string) =>
-  Commands.find((command) => command.name === name);
+  commands.find((command) => command.name === name);
 
 export const logCommand = (interaction: CommandInteraction) => {
   const { user, commandName } = interaction;
