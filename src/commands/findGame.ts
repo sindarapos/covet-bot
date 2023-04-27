@@ -1,26 +1,50 @@
 import { Command, CommandName } from '../Command';
-import { fuzzyMatch } from '../utils/stringUtils';
+import { summaryFormatter } from '../utils/stringUtils';
+import Fuse from 'fuse.js';
 
 interface App {
   id: number;
   name: string;
 }
 
-const fetchSteamApps = async (query: string): Promise<App[]> => {
+const querySteamApps = (apps: App[], query: string): App[] => {
+  const fuse = new Fuse(apps, { keys: ['name'], shouldSort: true, findAllMatches: true, threshold: 0.1 });
+  return fuse.search(query)?.map((fuseResult) => fuseResult.item);
+};
+
+const fetchSteamApps = async (): Promise<App[]> => {
   try {
     const response = await fetch(
       'https://api.steampowered.com/ISteamApps/GetAppList/v0002/?format=json',
     );
     const data = await response.json();
-    const apps: App[] = data?.applist?.apps;
-    if (!Array.isArray(apps)) {
-      return [];
-    }
-    return apps?.filter((app) => fuzzyMatch(query, app.name));
+    return data?.applist?.apps ?? [];
   }
   catch (e) {
     throw new Error(`I was unable to contact steam: ${e}`);
   }
+};
+
+const generateContent = (apps: App[], query: string): string => {
+  // no game found
+  if (apps?.length === 0) {
+    return `Sorry, I wasn't able to find "${query}" in the Steam store :sweat:.`;
+  }
+
+  // single game found
+  if (apps?.length === 1) {
+    return `I've found ${apps[0]?.name} in the steam store!`;
+  }
+
+  // multiple games found
+  const appNames = apps.map((app) => app.name);
+  const summary = summaryFormatter(appNames);
+  return `I've found ${summary} games that match your query, which one are you looking for?`;
+};
+
+const findSteamApps = async (query: string): Promise<App[]> => {
+  const apps = await fetchSteamApps();
+  return querySteamApps(apps, query);
 };
 
 const options: Command['options'] = [{
@@ -36,7 +60,6 @@ const findGame: Command = {
   options,
   run: async (interaction) => {
     const query = interaction.options.get('query')?.value;
-    console.log('Looking for game with query', query);
 
     // Initial answer (to prevent timeout)
     await interaction.reply({
@@ -49,31 +72,12 @@ const findGame: Command = {
     }
 
     try {
-      const apps = await fetchSteamApps(query);
+      const apps = await findSteamApps(query);
+      const content = generateContent(apps, query);
 
-      // no game found
-      if (apps?.length === 0) {
-        await interaction.followUp({
-          ephemeral: true,
-          content: `Sorry, I wasn't able to find "${query}" in the Steam store :sweat:.`,
-        });
-        return;
-      }
-
-      // single game found
-      if (apps?.length === 1) {
-        await interaction.followUp({
-          ephemeral: true,
-          content: `I've found ${apps[0]?.name} in the steam store!`,
-        });
-        return;
-      }
-
-      // multiple games found
-      const appNames = apps.map((app) => app?.name).join(', ');
       await interaction.followUp({
         ephemeral: true,
-        content: `I've found ${apps.length} games that match your query, which one are you looking for? ${appNames}`,
+        content,
       });
     }
     catch (e) {
