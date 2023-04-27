@@ -3,7 +3,7 @@ import { Client } from 'discord.js';
 import ready from './listeners/ready';
 import interactionCreate from './listeners/interactionCreate';
 
-console.log('Bot is starting...');
+console.log('Bot is starting ...');
 const client = new Client({
   intents: [],
 });
@@ -11,6 +11,6 @@ const client = new Client({
 console.log('Logging in ...');
 client.login(process.env.DISCORD_TOKEN);
 
-console.log('Registering listeners:');
+console.log('Registering listeners ...');
 ready(client);
 interactionCreate(client);
