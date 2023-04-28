@@ -1,19 +1,62 @@
 import { Client, ClientApplication } from 'discord.js';
 import { commands } from '../Command';
+import { sequelize } from '../configuration/database';
+import { initModels } from '../configuration/models/initModels';
 
-export default (client: Client): void => {
+const syncDatabaseModels = async () => {
+  console.log('Initializing models ...');
+
+  try {
+    await initModels();
+    console.log('Database models has been initialized successfully.');
+  }
+  catch (error) {
+    console.error('Unable to initialize database models:', error);
+  }
+
+  console.log('Syncing database models ...');
+  try {
+    await sequelize.sync();
+    console.log('Database models synced  successfully.');
+  }
+  catch (error) {
+    console.error('Unable to sync database models:', error);
+  }
+
+  const tables = await sequelize.showAllSchemas({});
+  console.log(tables);
+};
+
+const checkDatabaseConnection = async () => {
+  console.log('Connecting to database ...');
+  try {
+    await sequelize.authenticate();
+    console.log('Database connection has been established successfully.');
+  }
+  catch (error) {
+    console.error('Unable to connect to the database:', error);
+  }
+};
+
+const initCommands = async (client: Client) => {
+  if (
+    !client.user ||
+    !client.application ||
+    !(client.application instanceof ClientApplication)
+  ) {
+    return;
+  }
+
+  console.log('Registering commands ...');
+  await client.application.commands.set(commands);
+
+  console.log(`${client.user?.username} is online`);
+};
+
+export const ready = (client: Client) => {
   client.on('ready', async () => {
-    if (
-      !client.user ||
-      !client.application ||
-      !(client.application instanceof ClientApplication)
-    ) {
-      return;
-    }
-
-    console.log('Registering commands ...');
-    await client.application.commands.set(commands);
-
-    console.log(`${client.user?.username} is online`);
+    await checkDatabaseConnection();
+    await syncDatabaseModels();
+    await initCommands(client);
   });
 };
