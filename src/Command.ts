@@ -2,8 +2,8 @@ import {
   ChatInputApplicationCommandData,
   CommandInteraction,
 } from 'discord.js';
-import hello from './commands/hello';
-import findGame from './commands/findGame';
+import { hello } from './commands/hello';
+import { findGame } from './commands/findGame';
 
 export const enum CommandName {
   Hello = 'hello',

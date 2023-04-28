@@ -27,7 +27,7 @@ const options: Command['options'] = [{
   required: true,
 }];
 
-const findGame: Command = {
+export const findGame: Command = {
   name: CommandName.FindGame,
   description: 'Finds a game in the steam store.',
   options,
@@ -61,5 +61,3 @@ const findGame: Command = {
     }
   },
 };
-
-export default findGame;

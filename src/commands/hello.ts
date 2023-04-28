@@ -1,6 +1,6 @@
 import { Command, CommandName } from '../Command';
 
-const hello: Command = {
+export const hello: Command = {
   name: CommandName.Hello,
   description: 'Returns a greeting',
   run: async (interaction) => {
@@ -12,5 +12,3 @@ const hello: Command = {
     });
   },
 };
-
-export default hello;

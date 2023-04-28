@@ -33,7 +33,7 @@ const handleCommand = async (
   }
 };
 
-export default (client: Client): void => {
+export const interactionCreate = (client: Client): void => {
   client.on(Events.InteractionCreate, async (interaction: Interaction) => {
     if (
       !interaction.isChatInputCommand() ||
