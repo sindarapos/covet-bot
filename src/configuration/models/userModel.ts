@@ -8,31 +8,39 @@ interface Attributes {
   discordUserId: User['id'];
 }
 
-type CreationAttributes = Omit<Attributes, 'id'>
+type CreationAttributes = Omit<Attributes, 'id'>;
 
-export class UserModel extends Model<Attributes, CreationAttributes> {
+export class UserModel
+  extends Model<Attributes, CreationAttributes>
+  implements Attributes
+{
   declare id: number;
   declare username: User['username'];
   declare discordUserId: User['id'];
+  declare set: Model['set'];
+  declare setAttributes: Model['setAttributes'];
 }
 
 export const initUserModel = () => {
-  UserModel.init({
-    id: {
-      type: DataTypes.INTEGER,
-      autoIncrement: true,
-      primaryKey: true,
+  UserModel.init(
+    {
+      id: {
+        type: DataTypes.INTEGER,
+        autoIncrement: true,
+        primaryKey: true,
+      },
+      discordUserId: {
+        type: DataTypes.STRING,
+        unique: true,
+      },
+      username: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
     },
-    discordUserId: {
-      type: DataTypes.STRING,
-      unique: true,
+    {
+      sequelize,
+      modelName: 'User',
     },
-    username: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-  }, {
-    sequelize,
-    modelName: 'User',
-  });
+  );
 };
