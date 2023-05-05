@@ -1,5 +1,5 @@
 import { Command, CommandName } from '../Command';
-import { UserModel } from '../configuration/models/userModel';
+import { UserModel } from '../configuration/models/user.model';
 
 const run: Command['run'] = async (interaction) => {
   const {
@@ -8,9 +8,10 @@ const run: Command['run'] = async (interaction) => {
 
   await interaction.deferReply({ ephemeral: true });
 
-  const [user] = await UserModel.upsert({ discordUserId: id, username });
+  const [user, created] = await UserModel.upsert({ discordUserId: id, username });
+  const action = created ? 'registered' : 'recognized';
   await interaction.editReply({
-    content: `Hello there, ${username}! you've been registered as ${user.id}`,
+    content: `Hello there, ${username}! you've been ${action} as ${user.id}`,
   });
 };
 

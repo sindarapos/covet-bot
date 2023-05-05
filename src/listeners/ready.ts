@@ -1,7 +1,6 @@
 import { Client, ClientApplication, ClientUser } from 'discord.js';
 import { commands } from '../Command';
-import { sequelize } from '../configuration/database';
-import { initModels } from '../configuration/models/initModels';
+import { initModels, sequelize } from '../configuration/database';
 
 const syncDatabaseModels = async () => {
   console.log('Initializing models ...');
