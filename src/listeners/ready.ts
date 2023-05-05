@@ -1,4 +1,4 @@
-import { Client, ClientApplication } from 'discord.js';
+import { Client, ClientApplication, ClientUser } from 'discord.js';
 import { commands } from '../Command';
 import { sequelize } from '../configuration/database';
 import { initModels } from '../configuration/models/initModels';
@@ -7,10 +7,9 @@ const syncDatabaseModels = async () => {
   console.log('Initializing models ...');
 
   try {
-    await initModels();
+    initModels();
     console.log('Database models has been initialized successfully.');
-  }
-  catch (error) {
+  } catch (error) {
     console.error('Unable to initialize database models:', error);
   }
 
@@ -18,8 +17,7 @@ const syncDatabaseModels = async () => {
   try {
     await sequelize.sync();
     console.log('Database models synced  successfully.');
-  }
-  catch (error) {
+  } catch (error) {
     console.error('Unable to sync database models:', error);
   }
 
@@ -32,8 +30,7 @@ const checkDatabaseConnection = async () => {
   try {
     await sequelize.authenticate();
     console.log('Database connection has been established successfully.');
-  }
-  catch (error) {
+  } catch (error) {
     console.error('Unable to connect to the database:', error);
   }
 };
@@ -50,7 +47,9 @@ const initCommands = async (client: Client) => {
   console.log('Registering commands ...');
   await client.application.commands.set(commands);
 
-  console.log(`${client.user?.username} is online`);
+  if (client.user instanceof ClientUser) {
+    console.log(`${client.user.username} is online`);
+  }
 };
 
 export const ready = (client: Client) => {

@@ -15,18 +15,16 @@ const handleCommand = async (
   try {
     logCommand(interaction);
     await command.run(interaction);
-  }
-  catch (error) {
+  } catch (error) {
     console.error(error);
     if (interaction.replied || interaction.deferred) {
       await interaction.followUp({
-        content: `There was an error while executing ${interaction?.commandName}!`,
+        content: `There was an error while executing ${interaction.commandName}!`,
         ephemeral: true,
       });
-    }
-    else {
+    } else {
       await interaction.reply({
-        content: `There was an error while executing ${interaction?.commandName}!`,
+        content: `There was an error while executing ${interaction.commandName}!`,
         ephemeral: true,
       });
     }
@@ -46,9 +44,7 @@ export const interactionCreate = (client: Client): void => {
     const command = findCommandByName(interaction.commandName);
 
     if (!command) {
-      console.error(
-        `No command matching ${interaction.commandName} was found.`,
-      );
+      console.error(`No command matching ${interaction.commandName} was found.`);
       return;
     }
 
