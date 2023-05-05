@@ -18,9 +18,9 @@ function isRecordWithProperties<K extends PropertyKey[]>(
   prop: K,
 ): element is Record<K[number], unknown> {
   if (!isRecord(element)) {
-    return;
+    return false;
   }
-  return prop in element;
+  return prop.every((value) => value in element);
 }
 
 function isSteamApp(element: unknown): element is SteamApp {
@@ -29,15 +29,15 @@ function isSteamApp(element: unknown): element is SteamApp {
 
 export function isSteamAppList(element: unknown): element is SteamAppList {
   if (!isRecordWithProperties(element, ['appList' as const])) {
-    return;
+    return false;
   }
   const { appList } = element;
   if (!isRecordWithProperties(appList, ['apps' as const])) {
-    return;
+    return false;
   }
   const { apps } = appList;
   if (!Array.isArray(apps)) {
-    return;
+    return false;
   }
 
   // Only check the first member for speed

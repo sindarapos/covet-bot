@@ -1,5 +1,6 @@
 import Fuse from 'fuse.js';
 import { isSteamAppList, SteamApp } from '../SteamApp';
+import { throttle } from './functionUtils';
 
 export const querySteamApps = (apps: SteamApp[], query: string): SteamApp[] => {
   const fuse = new Fuse(apps, {
@@ -26,7 +27,10 @@ export const fetchSteamApps = async (): Promise<SteamApp[]> => {
   }
 };
 
+// Cache fetching of Steam app list
+const throttledFetchSteamApps = throttle(fetchSteamApps, 60000);
+
 export const findSteamApps = async (query: string): Promise<SteamApp[]> => {
-  const apps = await fetchSteamApps();
+  const apps = await throttledFetchSteamApps();
   return querySteamApps(apps, query);
 };
