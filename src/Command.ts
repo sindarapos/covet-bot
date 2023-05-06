@@ -7,9 +7,12 @@ export const enum CommandName {
   FindGame = 'find',
 }
 
-export interface Command extends ChatInputApplicationCommandData {
-  run: (interaction: CommandInteraction) => Promise<void>;
+export interface BaseCommand extends ChatInputApplicationCommandData {
   name: CommandName;
 }
+
+type Executor = (interaction: CommandInteraction) => Promise<void>;
+
+export type Command = BaseCommand & ({ run: Executor } | { autocomplete: Executor });
 
 export const commands: Command[] = [hello, findGame];

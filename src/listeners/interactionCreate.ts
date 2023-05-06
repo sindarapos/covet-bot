@@ -14,7 +14,12 @@ const handleCommand = async (
 ): Promise<void> => {
   try {
     logCommand(interaction);
-    await command.run(interaction);
+    if (interaction.isChatInputCommand() && 'run' in command) {
+      await command.run(interaction);
+    }
+    if (interaction.isAutocomplete() && 'autocomplete' in command) {
+      await command.autocomplete(interaction);
+    }
   } catch (error) {
     console.error(error);
     if (interaction.replied || interaction.deferred) {
@@ -34,7 +39,6 @@ const handleCommand = async (
 export const interactionCreate = (client: Client): void => {
   client.on(Events.InteractionCreate, async (interaction: Interaction) => {
     if (
-      !interaction.isChatInputCommand() ||
       !(interaction instanceof CommandInteraction) ||
       !(client.application instanceof ClientApplication)
     ) {
