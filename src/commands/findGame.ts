@@ -5,12 +5,12 @@ import { SteamApp } from '../SteamApp';
 
 const generateContent = (apps: SteamApp[], query: string): string => {
   // no game found
-  if (apps?.length === 0) {
+  if (apps.length === 0) {
     return `Sorry, I wasn't able to find "${query}" in the Steam store :sweat:.`;
   }
 
   // single game found
-  if (apps?.length === 1) {
+  if (apps.length === 1) {
     return `I've found ${apps[0]?.name} in the steam store!`;
   }
 
@@ -20,14 +20,16 @@ const generateContent = (apps: SteamApp[], query: string): string => {
   return `I've found ${summary} games that match your query, which one are you looking for?`;
 };
 
-const options: Command['options'] = [{
-  type: 3,
-  name: 'query',
-  description: 'The name of the game you are trying to find.',
-  required: true,
-}];
+const options: Command['options'] = [
+  {
+    type: 3,
+    name: 'query',
+    description: 'The name of the game you are trying to find.',
+    required: true,
+  },
+];
 
-const findGame: Command = {
+export const findGame: Command = {
   name: CommandName.FindGame,
   description: 'Finds a game in the steam store.',
   options,
@@ -37,7 +39,7 @@ const findGame: Command = {
     // Initial answer (to prevent timeout)
     await interaction.reply({
       ephemeral: true,
-      content: `Looking for "${query}" in the Steam store ...`,
+      content: `Looking for "${query ?? 'unknown'}" in the Steam store ...`,
     });
 
     if (typeof query !== 'string') {
@@ -48,12 +50,10 @@ const findGame: Command = {
       const apps = await findSteamApps(query);
       const content = generateContent(apps, query);
 
-      await interaction.followUp({
-        ephemeral: true,
+      await interaction.editReply({
         content,
       });
-    }
-    catch (e) {
+    } catch (e: unknown) {
       await interaction.followUp({
         ephemeral: true,
         content: `Ran into an error: ${e}`,
@@ -61,5 +61,3 @@ const findGame: Command = {
     }
   },
 };
-
-export default findGame;
