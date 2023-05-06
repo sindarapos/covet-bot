@@ -19,9 +19,6 @@ const syncDatabaseModels = async () => {
   } catch (error) {
     console.error('Unable to sync database models:', error);
   }
-
-  const tables = await sequelize.showAllSchemas({});
-  console.log(tables);
 };
 
 const checkDatabaseConnection = async () => {
