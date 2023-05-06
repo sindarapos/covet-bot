@@ -21,7 +21,7 @@ const handleAutocomplete = async (
   }
 };
 
-const handleExecution = async (
+const handleRun = async (
   command: Command,
   interaction: Parameters<Command['run']>[0],
 ) => {
@@ -56,7 +56,7 @@ const handleCommand = async (
   }
 
   if (interaction.isChatInputCommand()) {
-    await handleExecution(command, interaction);
+    await handleRun(command, interaction);
   }
 };
 
