@@ -50,8 +50,7 @@ export const findGame: Command = {
       const apps = await findSteamApps(query);
       const content = generateContent(apps, query);
 
-      await interaction.followUp({
-        ephemeral: true,
+      await interaction.editReply({
         content,
       });
     } catch (e: unknown) {
