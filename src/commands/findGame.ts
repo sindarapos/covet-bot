@@ -3,7 +3,7 @@ import { summaryFormatter } from '../utils/stringUtils';
 import { findSteamApps } from '../utils/steamUtils';
 import { SteamApp } from '../SteamApp';
 
-const NUM_AUTOCOMPLETE_SUGGESTIONS = 20;
+const maxAutocompleteSuggestions = 20;
 
 const options: Command['options'] = [
   {
@@ -63,7 +63,7 @@ const run: Command['run'] = async (interaction) => {
 const autocomplete: Command['autocomplete'] = async (interaction) => {
   const focussedValue = interaction.options.getFocused();
   const apps = await findSteamApps(focussedValue);
-  const autocompleteOptions = apps.slice(0, NUM_AUTOCOMPLETE_SUGGESTIONS).map((app) => ({
+  const autocompleteOptions = apps.slice(0, maxAutocompleteSuggestions).map((app) => ({
     name: app.name,
     value: app.name,
   }));
