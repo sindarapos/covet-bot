@@ -1,25 +1,33 @@
 import {
+  AutocompleteInteraction,
+  ChatInputCommandInteraction,
   Client,
   ClientApplication,
-  CommandInteraction,
   Events,
   Interaction,
 } from 'discord.js';
 import { findCommandByName, logCommand } from '../utils/commandUtils';
 import { Command } from '../Command';
 
-const handleCommand = async (
+const handleAutocomplete = async (
   command: Command,
-  interaction: CommandInteraction,
-): Promise<void> => {
+  interaction: Parameters<NonNullable<Command['autocomplete']>>[0],
+) => {
   try {
     logCommand(interaction);
-    if (interaction.isChatInputCommand() && 'run' in command) {
-      await command.run(interaction);
-    }
-    if (interaction.isAutocomplete() && 'autocomplete' in command) {
-      await command.autocomplete(interaction);
-    }
+    await command.autocomplete?.(interaction);
+  } catch (error) {
+    console.error(error);
+  }
+};
+
+const handleExecution = async (
+  command: Command,
+  interaction: Parameters<Command['run']>[0],
+) => {
+  try {
+    logCommand(interaction);
+    await command.run(interaction);
   } catch (error) {
     console.error(error);
     if (interaction.replied || interaction.deferred) {
@@ -36,10 +44,29 @@ const handleCommand = async (
   }
 };
 
+const handleCommand = async (
+  command: Command,
+  interaction:
+    | Parameters<Command['run']>[0]
+    | Parameters<NonNullable<Command['autocomplete']>>[0],
+): Promise<void> => {
+  if (interaction.isAutocomplete()) {
+    await handleAutocomplete(command, interaction);
+    return;
+  }
+
+  if (interaction.isChatInputCommand()) {
+    await handleExecution(command, interaction);
+  }
+};
+
 export const interactionCreate = (client: Client): void => {
   client.on(Events.InteractionCreate, async (interaction: Interaction) => {
     if (
-      !(interaction instanceof CommandInteraction) ||
+      !(
+        interaction instanceof ChatInputCommandInteraction ||
+        interaction instanceof AutocompleteInteraction
+      ) ||
       !(client.application instanceof ClientApplication)
     ) {
       return;
