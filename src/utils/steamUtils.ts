@@ -21,7 +21,7 @@ export const fetchSteamApps = async (): Promise<SteamApp[]> => {
     if (!isSteamAppList(data)) {
       return [];
     }
-    return data.appList.apps;
+    return data.applist.apps;
   } catch (e) {
     throw new Error(`I was unable to contact steam`);
   }

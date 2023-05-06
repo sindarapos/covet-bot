@@ -1,10 +1,10 @@
 export interface SteamApp {
-  id: number;
+  appid: number;
   name: string;
 }
 
 export interface SteamAppList {
-  appList: {
+  applist: {
     apps: SteamApp[];
   };
 }
@@ -24,26 +24,30 @@ function isRecordWithProperties<K extends PropertyKey[]>(
 }
 
 function isSteamApp(element: unknown): element is SteamApp {
-  return isRecordWithProperties(element, ['id' as const, 'name' as const]);
+  return isRecordWithProperties(element, ['appid' as const, 'name' as const]);
 }
 
 export function isSteamAppList(element: unknown): element is SteamAppList {
-  if (!isRecordWithProperties(element, ['appList' as const])) {
+  if (!isRecordWithProperties(element, ['applist' as const])) {
+    console.log('Has no applist');
     return false;
   }
-  const { appList } = element;
-  if (!isRecordWithProperties(appList, ['apps' as const])) {
+  const { applist } = element;
+  if (!isRecordWithProperties(applist, ['apps' as const])) {
+    console.log('Has no apps');
     return false;
   }
-  const { apps } = appList;
+  const { apps } = applist;
   if (!Array.isArray(apps)) {
+    console.log('Apps is not an array');
     return false;
   }
 
   // Only check the first member for speed
   const app: unknown = apps[0];
   if (!app) {
-    return true;
+    console.log('First app is empty');
+    return false;
   }
 
   return isSteamApp(app);
