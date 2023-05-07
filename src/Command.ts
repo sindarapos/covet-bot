@@ -1,4 +1,8 @@
-import { ChatInputApplicationCommandData, CommandInteraction } from 'discord.js';
+import {
+  AutocompleteInteraction,
+  ChatInputApplicationCommandData,
+  ChatInputCommandInteraction,
+} from 'discord.js';
 import { hello } from './commands/hello';
 import { findGame } from './commands/findGame';
 
@@ -8,8 +12,9 @@ export const enum CommandName {
 }
 
 export interface Command extends ChatInputApplicationCommandData {
-  run: (interaction: CommandInteraction) => Promise<void>;
   name: CommandName;
+  run: (interaction: ChatInputCommandInteraction) => Promise<void>;
+  autocomplete?: (interaction: AutocompleteInteraction) => Promise<void>;
 }
 
 export const commands: Command[] = [hello, findGame];

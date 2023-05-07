@@ -10,7 +10,6 @@ export const throttle = <R, A extends never[]>(
     const delta = now - previousTime;
 
     if (delta <= wait) {
-      console.log('Returning previous value');
       return previousValue;
     }
 
