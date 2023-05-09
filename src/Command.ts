@@ -5,10 +5,12 @@ import {
 } from 'discord.js';
 import { hello } from './commands/hello';
 import { findGame } from './commands/findGame';
+import { addGame } from './commands/addGame';
 
 export const enum CommandName {
   Hello = 'hello',
   FindGame = 'find',
+  AddGame = 'covet',
 }
 
 export interface Command extends ChatInputApplicationCommandData {
@@ -17,4 +19,4 @@ export interface Command extends ChatInputApplicationCommandData {
   autocomplete?: (interaction: AutocompleteInteraction) => Promise<void>;
 }
 
-export const commands: Command[] = [hello, findGame];
+export const commands: Command[] = [hello, findGame, addGame];
