@@ -2,7 +2,23 @@ import { Command, CommandName } from '../Command';
 import { findSteamAppDetails } from '../utils/steamUtils';
 import { findGame } from './findGame';
 import { SteamAppDetail } from '../SteamAppDetail';
-import { EmbedBuilder } from 'discord.js';
+import {
+  ActionRowBuilder,
+  bold,
+  ButtonBuilder,
+  ButtonStyle,
+  ChatInputCommandInteraction,
+  EmbedBuilder,
+  italic,
+  Message,
+} from 'discord.js';
+import { MessageActionRowComponentBuilder } from '@discordjs/builders';
+
+const enum ButtonCustomIds {
+  confirm = 'confirm',
+  edit = 'edit',
+  cancel = 'cancel',
+}
 
 const options: Command['options'] = [
   {
@@ -36,6 +52,39 @@ const generateSteamAppEmbed = ({
     .setURL(website);
 };
 
+const generateActionRow = (): ActionRowBuilder<MessageActionRowComponentBuilder> => {
+  const confirm = new ButtonBuilder()
+    .setCustomId(ButtonCustomIds.confirm)
+    .setLabel('Add')
+    .setStyle(ButtonStyle.Primary);
+
+  const edit = new ButtonBuilder()
+    .setCustomId(ButtonCustomIds.edit)
+    .setLabel('Edit')
+    .setStyle(ButtonStyle.Secondary);
+
+  const cancel = new ButtonBuilder()
+    .setCustomId(ButtonCustomIds.cancel)
+    .setLabel('Cancel')
+    .setStyle(ButtonStyle.Secondary);
+
+  return new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
+    cancel,
+    edit,
+    confirm,
+  );
+};
+
+const generateResponseCollector = async (
+  message: Message,
+  interaction: ChatInputCommandInteraction,
+) => {
+  return await message.awaitMessageComponent({
+    filter: (i) => i.user.id === interaction.user.id,
+    time: 300000,
+  });
+};
+
 const run: Command['run'] = async (interaction) => {
   const query = interaction.options.get('game')?.value;
 
@@ -60,9 +109,48 @@ const run: Command['run'] = async (interaction) => {
     }
 
     const embed = generateSteamAppEmbed(details);
-    await interaction.editReply({
+    const row = generateActionRow();
+    const message = await interaction.editReply({
+      content: "Is this the game you'd like to add?",
       embeds: [embed],
+      components: [row],
     });
+
+    try {
+      const confirm = await generateResponseCollector(message, interaction);
+
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+      switch (confirm.customId) {
+        case ButtonCustomIds.confirm:
+          await confirm.update({
+            content: `Great :thumbsup:! The game ${bold(details.name)} has been added!`,
+            embeds: [],
+            components: [],
+          });
+          break;
+        case ButtonCustomIds.edit:
+          await confirm.update({
+            content: `Sorry :cry:! This feature is not yet implemented.`,
+            embeds: [],
+            components: [],
+          });
+          break;
+        case ButtonCustomIds.cancel:
+          await confirm.update({
+            content: `Cancelling... the game ${bold(details.name)} has ${italic(
+              'not',
+            )} been added.`,
+            embeds: [],
+            components: [],
+          });
+          break;
+      }
+    } catch (e) {
+      await interaction.editReply({
+        content: 'Confirmation not received within 5 minutes, cancelling',
+        components: [],
+      });
+    }
   } catch (e: unknown) {
     await interaction.followUp({
       ephemeral: true,
