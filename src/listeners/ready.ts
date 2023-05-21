@@ -2,6 +2,7 @@ import { Client, ClientApplication, ClientUser } from 'discord.js';
 import { commands } from '../Command';
 import { initModels, sequelize } from '../configuration/database';
 import { GameModel } from '../configuration/models/game.model';
+import { UserModel } from '../configuration/models/user.model';
 
 const syncDatabaseModels = async () => {
   console.log('Initializing models ...');
@@ -21,8 +22,11 @@ const syncDatabaseModels = async () => {
     console.error('Unable to sync database models:', error);
   }
 
-  const count = await GameModel.count();
-  console.log(`Currently ${count} games are stored in the database.`);
+  const gameCount = await GameModel.count();
+  const userCount = await UserModel.count();
+  console.log(
+    `Currently ${gameCount} games and ${userCount} users are stored in the database.`,
+  );
 };
 
 const checkDatabaseConnection = async () => {
