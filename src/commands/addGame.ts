@@ -1,7 +1,5 @@
 import { Command, CommandName } from '../Command';
-import { findSteamAppDetails } from '../utils/steamUtils';
 import { findGame } from './findGame';
-import { SteamAppDetail } from '../SteamAppDetail';
 import {
   ActionRowBuilder,
   bold,
@@ -13,6 +11,9 @@ import {
   Message,
 } from 'discord.js';
 import { MessageActionRowComponentBuilder } from '@discordjs/builders';
+import { findSteamAppDetails } from '../services/steamService.ts';
+import { SteamAppDetail } from '../SteamAppDetail.ts';
+import { generateSteamAppEmbed } from '../utils/steamUtils.ts';
 
 const enum ButtonCustomIds {
   confirm = 'confirm',

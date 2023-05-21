@@ -1,7 +1,7 @@
 import { Command, CommandName } from '../Command';
 import { summaryFormatter } from '../utils/stringUtils';
-import { findSteamApps } from '../utils/steamUtils';
 import { SteamApp } from '../SteamApp';
+import { findSteamApps } from '../services/steamService.ts';
 
 const maxAutocompleteSuggestions = 20;
 
