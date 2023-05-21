@@ -15,6 +15,9 @@ import { MessageActionRowComponentBuilder } from '@discordjs/builders';
 import { findSteamAppDetails } from '../services/steamService.ts';
 import { SteamAppDetail } from '../SteamAppDetail.ts';
 import { generateSteamAppEmbed } from '../utils/steamUtils.ts';
+import { GameModel } from '../configuration/models/game.model.ts';
+import { GenreModel } from '../configuration/models/genre.model.ts';
+import { UserModel } from '../configuration/models/user.model.ts';
 
 const enum ButtonCustomIds {
   confirm = 'confirm',
@@ -36,7 +39,7 @@ const generateActionRow = (): ActionRowBuilder<MessageActionRowComponentBuilder>
   const confirm = new ButtonBuilder()
     .setCustomId(ButtonCustomIds.confirm)
     .setLabel('Add')
-    .setStyle(ButtonStyle.Primary);
+    .setStyle(ButtonStyle.Success);
 
   const edit = new ButtonBuilder()
     .setCustomId(ButtonCustomIds.edit)
@@ -46,7 +49,7 @@ const generateActionRow = (): ActionRowBuilder<MessageActionRowComponentBuilder>
   const cancel = new ButtonBuilder()
     .setCustomId(ButtonCustomIds.cancel)
     .setLabel('Cancel')
-    .setStyle(ButtonStyle.Secondary);
+    .setStyle(ButtonStyle.Danger);
 
   return new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
     cancel,
@@ -112,12 +115,33 @@ const handleEdit = async (
 const handleConfirm = async (
   buttonInteraction: ButtonInteraction,
   details: SteamAppDetail,
-): Promise<InteractionResponse> =>
-  buttonInteraction.update({
+): Promise<InteractionResponse> => {
+  const genreRecords = details.genres.map(({ description }) => ({ description }));
+  const genres = await GenreModel.bulkCreate<GenreModel>(genreRecords, {
+    ignoreDuplicates: true,
+  });
+  const [user] = await UserModel.upsert({
+    discordUserId: buttonInteraction.user.id,
+    username: buttonInteraction.user.username,
+  });
+
+  const game = new GameModel({
+    name: details.name,
+    description: details.shortDescription,
+    image: details.headerImage,
+    releaseDate: new Date(details.releaseDate.date),
+  });
+
+  game.genres = genres;
+  game.owners = [user];
+  await game.save();
+
+  return buttonInteraction.update({
     content: `Great :thumbsup:! The game ${bold(details.name)} has been added!`,
     embeds: [],
     components: [],
   });
+};
 
 const handleConfirmation = async (
   interaction: ChatInputCommandInteraction,
