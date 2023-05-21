@@ -20,7 +20,7 @@ export const fetchSteamApps = async (): Promise<SteamApp[]> => {
     }
     return data.applist.apps;
   } catch (e) {
-    throw new Error(`I was unable to contact steam`);
+    throw new Error(`I was unable to contact steam: ${e}`);
   }
 };
 
