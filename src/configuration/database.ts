@@ -4,6 +4,8 @@ import { GameModel } from './models/game.model';
 import { UserModel } from './models/user.model';
 import { OwnsModel } from './models/owns.model';
 import { LikesModel } from './models/likes.model';
+import { GenreModel } from './models/genre.model.ts';
+import { CharacterizesModel } from './models/characterizes.model.ts';
 
 export const sequelize = new Sequelize(process.env.DB_URL ?? '', {
   dialect: 'postgres',
@@ -16,5 +18,12 @@ export const sequelize = new Sequelize(process.env.DB_URL ?? '', {
 });
 
 export const initModels = () => {
-  sequelize.addModels([GameModel, UserModel, OwnsModel, LikesModel]);
+  sequelize.addModels([
+    GenreModel,
+    CharacterizesModel,
+    OwnsModel,
+    LikesModel,
+    GameModel,
+    UserModel,
+  ]);
 };
