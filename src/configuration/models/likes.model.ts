@@ -3,12 +3,12 @@ import { GameModel } from './game.model';
 import { UserModel } from './user.model';
 
 @Table({ tableName: 'Likes' })
-export class LikesModel extends Model {
+export class LikesModel extends Model<LikesModel> {
   @ForeignKey(() => GameModel)
   @Column
-  gameId!: number;
+  declare gameId: number;
 
   @ForeignKey(() => UserModel)
   @Column
-  userId!: number;
+  declare userId: number;
 }

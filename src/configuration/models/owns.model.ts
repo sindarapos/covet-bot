@@ -1,14 +1,18 @@
 import { Column, ForeignKey, Model, Table } from 'sequelize-typescript';
 import { GameModel } from './game.model';
 import { UserModel } from './user.model';
+import { InferAttributes, InferCreationAttributes } from 'sequelize';
 
 @Table({ tableName: 'Owns' })
-export class OwnsModel extends Model {
+export class OwnsModel extends Model<
+  InferAttributes<OwnsModel>,
+  InferCreationAttributes<OwnsModel>
+> {
   @ForeignKey(() => GameModel)
   @Column
-  gameId!: number;
+  declare gameId: number;
 
   @ForeignKey(() => UserModel)
   @Column
-  userId!: number;
+  declare userId: number;
 }
