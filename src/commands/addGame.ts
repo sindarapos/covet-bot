@@ -8,11 +8,11 @@ import {
   italic,
   Message,
 } from 'discord.js';
-import { SteamAppDetail } from '../SteamAppDetail.ts';
-import { GameModel } from '../configuration/models/game.model.ts';
-import { GenreModel } from '../configuration/models/genre.model.ts';
-import { UserModel } from '../configuration/models/user.model.ts';
-import { ButtonCustomIds, findAndDisplaySteamAppDetails } from '../utils/gameUtils.ts';
+import { SteamAppDetail } from '../SteamAppDetail';
+import { GameModel } from '../configuration/models/game.model';
+import { GenreModel } from '../configuration/models/genre.model';
+import { UserModel } from '../configuration/models/user.model';
+import { ButtonCustomIds, findAndDisplaySteamAppDetails } from '../utils/gameUtils';
 
 const options: Command['options'] = [
   {

@@ -1,12 +1,12 @@
-import { isSteamAppList, SteamApp } from '../SteamApp.ts';
+import { isSteamAppList, SteamApp } from '../SteamApp';
 import {
   isSteamAppDetailResponse,
   SteamAppDetail,
   SteamAppDetailResponse,
-} from '../SteamAppDetail.ts';
-import { isRecord } from '../Record.ts';
+} from '../SteamAppDetail';
+import { isRecord } from '../Record';
 import camelcaseKeys from 'camelcase-keys';
-import { throttle } from '../utils/functionUtils.ts';
+import { throttle } from '../utils/functionUtils';
 import Fuse from 'fuse.js';
 
 export const fetchSteamApps = async (): Promise<SteamApp[]> => {

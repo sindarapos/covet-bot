@@ -1,4 +1,4 @@
-import { SteamAppDetail } from '../SteamAppDetail.ts';
+import { SteamAppDetail } from '../SteamAppDetail';
 import { EmbedBuilder } from 'discord.js';
 
 export const generateSteamAppEmbed = ({

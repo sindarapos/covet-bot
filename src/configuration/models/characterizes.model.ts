@@ -1,6 +1,6 @@
 import { Column, ForeignKey, Model, Table } from 'sequelize-typescript';
 import { GameModel } from './game.model';
-import { GenreModel } from './genre.model.ts';
+import { GenreModel } from './genre.model';
 import { InferAttributes, InferCreationAttributes } from 'sequelize';
 
 @Table({ tableName: 'Characterizes' })

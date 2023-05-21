@@ -5,9 +5,9 @@ import {
   ChatInputCommandInteraction,
   Message,
 } from 'discord.js';
-import { SteamAppDetail } from '../SteamAppDetail.ts';
-import { findSteamAppDetails } from '../services/steamService.ts';
-import { generateSteamAppEmbed } from './steamUtils.ts';
+import { SteamAppDetail } from '../SteamAppDetail';
+import { findSteamAppDetails } from '../services/steamService';
+import { generateSteamAppEmbed } from './steamUtils';
 import { MessageActionRowComponentBuilder } from '@discordjs/builders';
 
 export const enum ButtonCustomIds {

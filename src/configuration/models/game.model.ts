@@ -10,8 +10,8 @@ import {
 import { OwnsModel } from './owns.model';
 import { UserModel } from './user.model';
 import { LikesModel } from './likes.model';
-import { GenreModel } from './genre.model.ts';
-import { CharacterizesModel } from './characterizes.model.ts';
+import { GenreModel } from './genre.model';
+import { CharacterizesModel } from './characterizes.model';
 import { InferAttributes, InferCreationAttributes } from 'sequelize';
 
 @Table({ tableName: 'Game' })

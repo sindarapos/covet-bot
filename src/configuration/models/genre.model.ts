@@ -1,6 +1,6 @@
 import { BelongsToMany, Column, Model, Table, Unique } from 'sequelize-typescript';
-import { GameModel } from './game.model.ts';
-import { CharacterizesModel } from './characterizes.model.ts';
+import { GameModel } from './game.model';
+import { CharacterizesModel } from './characterizes.model';
 import { InferAttributes, InferCreationAttributes } from 'sequelize';
 
 @Table({ tableName: 'Genre' })
