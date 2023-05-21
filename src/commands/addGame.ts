@@ -4,9 +4,10 @@ import {
   ActionRowBuilder,
   bold,
   ButtonBuilder,
+  ButtonInteraction,
   ButtonStyle,
   ChatInputCommandInteraction,
-  EmbedBuilder,
+  InteractionResponse,
   italic,
   Message,
 } from 'discord.js';
@@ -30,28 +31,6 @@ const options: Command['options'] = [
     autocomplete: true,
   },
 ];
-
-const generateSteamAppEmbed = ({
-  name,
-  shortDescription,
-  headerImage,
-  genres,
-  releaseDate: { date, comingSoon },
-  priceOverview: { finalFormatted },
-  website,
-}: SteamAppDetail): EmbedBuilder => {
-  const genresMessage = genres.map(({ description }) => description).join(', ');
-  return new EmbedBuilder()
-    .setTitle(name)
-    .setDescription(shortDescription)
-    .setImage(headerImage)
-    .setFields(
-      { name: 'Genres', value: genresMessage },
-      { name: 'Release date', value: comingSoon ? 'coming soon' : date, inline: true },
-      { name: 'Price', value: finalFormatted, inline: true },
-    )
-    .setURL(website);
-};
 
 const generateActionRow = (): ActionRowBuilder<MessageActionRowComponentBuilder> => {
   const confirm = new ButtonBuilder()
@@ -79,11 +58,82 @@ const generateActionRow = (): ActionRowBuilder<MessageActionRowComponentBuilder>
 const generateResponseCollector = async (
   message: Message,
   interaction: ChatInputCommandInteraction,
-) => {
-  return await message.awaitMessageComponent({
+): Promise<ButtonInteraction> => {
+  return await message.awaitMessageComponent<2>({
     filter: (i) => i.user.id === interaction.user.id,
     time: 300000,
   });
+};
+
+const findAndDisplaySteamAppDetails = async (
+  interaction: ChatInputCommandInteraction,
+  query: string,
+): Promise<[SteamAppDetail | undefined, Message]> => {
+  const details = await findSteamAppDetails(query);
+
+  if (!details) {
+    const message = await interaction.editReply({
+      content: `Sorry, I wasn't able to find "${query}" in the Steam store :sweat:.`,
+    });
+    return [details, message];
+  }
+
+  const embed = generateSteamAppEmbed(details);
+  const row = generateActionRow();
+  const message = await interaction.editReply({
+    content: "Is this the game you'd like to add?",
+    embeds: [embed],
+    components: [row],
+  });
+  return [details, message];
+};
+
+const handleCancel = async (
+  buttonInteraction: ButtonInteraction,
+  details: SteamAppDetail,
+): Promise<InteractionResponse> =>
+  buttonInteraction.update({
+    content: `Cancelling... the game ${bold(details.name)} has ${italic(
+      'not',
+    )} been added.`,
+    embeds: [],
+    components: [],
+  });
+
+const handleEdit = async (
+  buttonInteraction: ButtonInteraction,
+): Promise<InteractionResponse> =>
+  buttonInteraction.update({
+    content: `Sorry :cry:! This feature is not yet implemented.`,
+    embeds: [],
+    components: [],
+  });
+
+const handleConfirm = async (
+  buttonInteraction: ButtonInteraction,
+  details: SteamAppDetail,
+): Promise<InteractionResponse> =>
+  buttonInteraction.update({
+    content: `Great :thumbsup:! The game ${bold(details.name)} has been added!`,
+    embeds: [],
+    components: [],
+  });
+
+const handleConfirmation = async (
+  interaction: ChatInputCommandInteraction,
+  message: Message,
+  details: SteamAppDetail,
+): Promise<InteractionResponse> => {
+  const confirm = await generateResponseCollector(message, interaction);
+  switch (confirm.customId) {
+    case ButtonCustomIds.confirm:
+      return handleConfirm(confirm, details);
+    case ButtonCustomIds.edit:
+      return handleEdit(confirm);
+    default:
+    case ButtonCustomIds.cancel:
+      return handleCancel(confirm, details);
+  }
 };
 
 const run: Command['run'] = async (interaction) => {
@@ -100,58 +150,11 @@ const run: Command['run'] = async (interaction) => {
   }
 
   try {
-    const details = await findSteamAppDetails(query);
-
+    const [details, message] = await findAndDisplaySteamAppDetails(interaction, query);
     if (!details) {
-      await interaction.editReply({
-        content: `Sorry, I wasn't able to find "${query}" in the Steam store :sweat:.`,
-      });
       return;
     }
-
-    const embed = generateSteamAppEmbed(details);
-    const row = generateActionRow();
-    const message = await interaction.editReply({
-      content: "Is this the game you'd like to add?",
-      embeds: [embed],
-      components: [row],
-    });
-
-    try {
-      const confirm = await generateResponseCollector(message, interaction);
-
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
-      switch (confirm.customId) {
-        case ButtonCustomIds.confirm:
-          await confirm.update({
-            content: `Great :thumbsup:! The game ${bold(details.name)} has been added!`,
-            embeds: [],
-            components: [],
-          });
-          break;
-        case ButtonCustomIds.edit:
-          await confirm.update({
-            content: `Sorry :cry:! This feature is not yet implemented.`,
-            embeds: [],
-            components: [],
-          });
-          break;
-        case ButtonCustomIds.cancel:
-          await confirm.update({
-            content: `Cancelling... the game ${bold(details.name)} has ${italic(
-              'not',
-            )} been added.`,
-            embeds: [],
-            components: [],
-          });
-          break;
-      }
-    } catch (e) {
-      await interaction.editReply({
-        content: 'Confirmation not received within 5 minutes, cancelling',
-        components: [],
-      });
-    }
+    await handleConfirmation(interaction, message, details);
   } catch (e: unknown) {
     await interaction.followUp({
       ephemeral: true,
