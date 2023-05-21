@@ -1,29 +1,18 @@
 import { Command, CommandName } from '../Command';
 import { findGame } from './findGame';
 import {
-  ActionRowBuilder,
   bold,
-  ButtonBuilder,
   ButtonInteraction,
-  ButtonStyle,
   ChatInputCommandInteraction,
   InteractionResponse,
   italic,
   Message,
 } from 'discord.js';
-import { MessageActionRowComponentBuilder } from '@discordjs/builders';
-import { findSteamAppDetails } from '../services/steamService.ts';
 import { SteamAppDetail } from '../SteamAppDetail.ts';
-import { generateSteamAppEmbed } from '../utils/steamUtils.ts';
 import { GameModel } from '../configuration/models/game.model.ts';
 import { GenreModel } from '../configuration/models/genre.model.ts';
 import { UserModel } from '../configuration/models/user.model.ts';
-
-const enum ButtonCustomIds {
-  confirm = 'confirm',
-  edit = 'edit',
-  cancel = 'cancel',
-}
+import { ButtonCustomIds, findAndDisplaySteamAppDetails } from '../utils/gameUtils.ts';
 
 const options: Command['options'] = [
   {
@@ -35,29 +24,6 @@ const options: Command['options'] = [
   },
 ];
 
-const generateActionRow = (): ActionRowBuilder<MessageActionRowComponentBuilder> => {
-  const confirm = new ButtonBuilder()
-    .setCustomId(ButtonCustomIds.confirm)
-    .setLabel('Add')
-    .setStyle(ButtonStyle.Success);
-
-  const edit = new ButtonBuilder()
-    .setCustomId(ButtonCustomIds.edit)
-    .setLabel('Edit')
-    .setStyle(ButtonStyle.Secondary);
-
-  const cancel = new ButtonBuilder()
-    .setCustomId(ButtonCustomIds.cancel)
-    .setLabel('Cancel')
-    .setStyle(ButtonStyle.Danger);
-
-  return new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
-    cancel,
-    edit,
-    confirm,
-  );
-};
-
 const generateResponseCollector = async (
   message: Message,
   interaction: ChatInputCommandInteraction,
@@ -68,34 +34,11 @@ const generateResponseCollector = async (
   });
 };
 
-const findAndDisplaySteamAppDetails = async (
-  interaction: ChatInputCommandInteraction,
-  query: string,
-): Promise<[SteamAppDetail | undefined, Message]> => {
-  const details = await findSteamAppDetails(query);
-
-  if (!details) {
-    const message = await interaction.editReply({
-      content: `Sorry, I wasn't able to find "${query}" in the Steam store :sweat:.`,
-    });
-    return [details, message];
-  }
-
-  const embed = generateSteamAppEmbed(details);
-  const row = generateActionRow();
-  const message = await interaction.editReply({
-    content: "Is this the game you'd like to add?",
-    embeds: [embed],
-    components: [row],
-  });
-  return [details, message];
-};
-
 const handleCancel = async (
-  buttonInteraction: ButtonInteraction,
+  interaction: ButtonInteraction,
   details: SteamAppDetail,
 ): Promise<InteractionResponse> =>
-  buttonInteraction.update({
+  interaction.update({
     content: `Cancelling... the game ${bold(details.name)} has ${italic(
       'not',
     )} been added.`,
@@ -103,47 +46,50 @@ const handleCancel = async (
     components: [],
   });
 
-const handleEdit = async (
-  buttonInteraction: ButtonInteraction,
-): Promise<InteractionResponse> =>
-  buttonInteraction.update({
+const handleEdit = async (interaction: ButtonInteraction): Promise<InteractionResponse> =>
+  interaction.update({
     content: `Sorry :cry:! This feature is not yet implemented.`,
     embeds: [],
     components: [],
   });
 
 const handleConfirm = async (
-  buttonInteraction: ButtonInteraction,
+  interaction: ButtonInteraction,
   details: SteamAppDetail,
 ): Promise<InteractionResponse> => {
-  const genreRecords = details.genres.map(({ description }) => ({ description }));
-  const genres = await GenreModel.bulkCreate<GenreModel>(genreRecords, {
+  // upsert genres
+  const genres = await GenreModel.bulkCreate(details.genres, {
+    fields: ['description'],
     ignoreDuplicates: true,
   });
+
+  // upsert user
   const [user] = await UserModel.upsert({
-    discordUserId: buttonInteraction.user.id,
-    username: buttonInteraction.user.username,
+    discordUserId: interaction.user.id,
+    username: interaction.user.username,
   });
 
-  const game = new GameModel({
+  // create a new game
+  const [game] = await GameModel.upsert({
     name: details.name,
     description: details.shortDescription,
     image: details.headerImage,
     releaseDate: new Date(details.releaseDate.date),
   });
 
+  // set associations
   game.genres = genres;
   game.owners = [user];
   await game.save();
 
-  return buttonInteraction.update({
+  return interaction.update({
     content: `Great :thumbsup:! The game ${bold(details.name)} has been added!`,
     embeds: [],
     components: [],
   });
 };
 
-const handleConfirmation = async (
+const handleInteractionResponse = async (
   interaction: ChatInputCommandInteraction,
   message: Message,
   details: SteamAppDetail,
@@ -162,10 +108,10 @@ const handleConfirmation = async (
 
 const run: Command['run'] = async (interaction) => {
   const query = interaction.options.get('game')?.value;
+  interaction.ephemeral = true;
 
   // Initial answer (to prevent timeout)
   await interaction.reply({
-    ephemeral: true,
     content: `Looking for "${query ?? 'unknown'}" in the Steam store ...`,
   });
 
@@ -178,10 +124,9 @@ const run: Command['run'] = async (interaction) => {
     if (!details) {
       return;
     }
-    await handleConfirmation(interaction, message, details);
+    await handleInteractionResponse(interaction, message, details);
   } catch (e: unknown) {
     await interaction.followUp({
-      ephemeral: true,
       content: `Ran into an error: ${e}`,
     });
   }
