@@ -6,23 +6,29 @@ import {
   DataType,
   BelongsToMany,
   Unique,
+  AllowNull,
 } from 'sequelize-typescript';
 import { GameModel } from './game.model';
 import { OwnsModel } from './owns.model';
 import { LikesModel } from './likes.model';
+import { InferAttributes, InferCreationAttributes } from 'sequelize';
 
 @Table({ tableName: 'User' })
-export class UserModel extends Model {
+export class UserModel extends Model<
+  InferAttributes<UserModel>,
+  InferCreationAttributes<UserModel>
+> {
+  @AllowNull(false)
   @Column(DataType.STRING)
-  username!: User['username'];
+  declare username: User['username'];
 
   @Unique
   @Column(DataType.STRING)
-  discordUserId!: User['id'];
+  declare discordUserId: User['id'];
 
   @BelongsToMany(() => GameModel, () => OwnsModel)
-  ownedGames!: GameModel[];
+  declare ownedGames?: GameModel[];
 
   @BelongsToMany(() => GameModel, () => LikesModel)
-  likedGames!: GameModel[];
+  declare likedGames?: GameModel[];
 }

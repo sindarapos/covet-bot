@@ -1,8 +1,7 @@
 {
   "name": "covet-bot",
   "version": "0.0.1",
-  "description": "Discord bot for sharing keeping track of upcomming games",
-  "main": "index.js",
+  "description": "Discord bot for sharing keeping track of upcoming games",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "ts-node src/app.ts"
@@ -10,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "camelcase-keys": "^7.0.2",
     "discord.js": "^14.9.0",
     "dotenv": "^16.0.3",
     "fuse.js": "^6.6.2",

@@ -9,7 +9,7 @@ const client = new Client({
 });
 
 console.log('Logging in ...');
-client.login(process.env.DISCORD_TOKEN);
+void client.login(process.env.DISCORD_TOKEN);
 
 console.log('Registering listeners ...');
 ready(client);

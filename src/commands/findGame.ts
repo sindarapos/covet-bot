@@ -1,7 +1,7 @@
 import { Command, CommandName } from '../Command';
 import { summaryFormatter } from '../utils/stringUtils';
-import { findSteamApps } from '../utils/steamUtils';
 import { SteamApp } from '../SteamApp';
+import { findSteamApps } from '../services/steamService.ts';
 
 const maxAutocompleteSuggestions = 20;
 
@@ -23,7 +23,7 @@ const generateContent = (apps: SteamApp[], query: string): string => {
 
   // single game found
   if (apps.length === 1) {
-    return `I've found ${apps[0]?.name} in the steam store!`;
+    return `I've found ${apps[0]?.name} (#${apps[0]?.appid}) in the steam store!`;
   }
 
   // multiple games found

@@ -1,25 +1,46 @@
-import { BelongsToMany, Column, Model, Table } from 'sequelize-typescript';
+import {
+  AllowNull,
+  BelongsToMany,
+  Column,
+  DataType,
+  Model,
+  Table,
+  Unique,
+} from 'sequelize-typescript';
 import { OwnsModel } from './owns.model';
 import { UserModel } from './user.model';
 import { LikesModel } from './likes.model';
+import { GenreModel } from './genre.model.ts';
+import { CharacterizesModel } from './characterizes.model.ts';
+import { InferAttributes, InferCreationAttributes } from 'sequelize';
 
 @Table({ tableName: 'Game' })
-export class GameModel extends Model {
+export class GameModel extends Model<
+  InferAttributes<GameModel>,
+  InferCreationAttributes<GameModel>
+> {
+  @Unique
+  @AllowNull(false)
   @Column
-  name!: string;
+  declare name: string;
+
+  @AllowNull(false)
+  @Column(DataType.TEXT)
+  declare description: string;
 
   @Column
-  releaseDate!: string;
+  declare image?: string;
 
+  @AllowNull(false)
   @Column
-  icon!: string;
+  declare releaseDate: Date;
 
-  @Column
-  playerCount!: number;
+  @BelongsToMany(() => GenreModel, () => CharacterizesModel)
+  declare genres?: GenreModel[];
 
   @BelongsToMany(() => UserModel, () => OwnsModel)
-  owners!: UserModel[];
+  declare owners?: UserModel[];
 
   @BelongsToMany(() => UserModel, () => LikesModel)
-  likers!: UserModel[];
+  declare likers?: UserModel[];
 }
