@@ -40,7 +40,7 @@ export class GameModel extends Model<
   @BelongsToMany(() => GenreModel, () => CharacterizesModel)
   declare genres?: GenreModel[];
 
-  @BelongsToMany(() => GenreModel, () => CategorizesModel)
+  @BelongsToMany(() => CategoryModel, () => CategorizesModel)
   declare categories?: CategoryModel[];
 
   @BelongsToMany(() => UserModel, () => OwnsModel)
