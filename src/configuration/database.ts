@@ -6,8 +6,8 @@ import { OwnsModel } from './models/owns.model';
 import { LikesModel } from './models/likes.model';
 import { GenreModel } from './models/genre.model';
 import { CharacterizesModel } from './models/characterizes.model';
-import { CategoryModel } from './models/category.model.ts';
-import { CategorizesModel } from './models/categorizes.model.ts';
+import { CategoryModel } from './models/category.model';
+import { CategorizesModel } from './models/categorizes.model';
 
 export const sequelize = new Sequelize(process.env.DB_URL ?? '', {
   dialect: 'postgres',
