@@ -3,6 +3,18 @@ import { GameModel } from '../configuration/models/game.model';
 import { ChatInputCommandInteraction } from 'discord.js';
 import { generateChatInputApplicationMention } from '../utils/stringUtils';
 import { generateGameList } from '../utils/gameUtils';
+import { GenreModel } from '../configuration/models/genre.model';
+import { Op } from 'sequelize';
+
+const options: Command['options'] = [
+  {
+    type: 3,
+    name: 'genre',
+    description: 'Filter games on a specific genre.',
+    required: false,
+    autocomplete: true,
+  },
+];
 
 const generateContent = async (
   interaction: ChatInputCommandInteraction,
@@ -49,8 +61,27 @@ const run: Command['run'] = async (interaction) => {
   }
 };
 
+const autocomplete: Command['autocomplete'] = async (interaction) => {
+  const focussedValue = interaction.options.getFocused();
+  const genres = await GenreModel.findAll({
+    where: {
+      [Op.or]: [
+        { description: { [Op.iLike]: `${focussedValue}%` } },
+        { description: { [Op.iLike]: `%${focussedValue}%` } },
+      ],
+    },
+  });
+  const autocompleteOptions = genres.slice(0, 20).map(({ description }) => ({
+    name: description,
+    value: description,
+  }));
+  await interaction.respond(autocompleteOptions);
+};
+
 export const listGames: Command = {
   name: CommandName.ListGames,
   description: 'List all the coveted games.',
+  options,
+  autocomplete,
   run,
 };
