@@ -66,6 +66,7 @@ export const findAndDisplaySteamAppDetails = async (
   });
   return [details, message];
 };
+
 const generateGameCategoryIcons = (categories?: CategoryModel[]): string => {
   const isMultiplayer = categories?.some(
     ({ description }) => description === 'Multi-player',
@@ -78,6 +79,7 @@ const generateGameCategoryIcons = (categories?: CategoryModel[]): string => {
 
   return `${multiplayerIcon} ${coopIcon} ${pvpIcon}`;
 };
+
 const generateGameListItem = ({
   name,
   releaseDate,
@@ -95,6 +97,7 @@ const generateGameListItem = ({
     isPastRelease ? 'd' : 's'
   } ${fromNow} · Added by ${username}`;
 };
+
 export const generateGameList = (games: GameModel[]): string => {
   return games.map(generateGameListItem).join('\n\r');
 };
