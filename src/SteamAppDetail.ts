@@ -1,6 +1,11 @@
 import { isRecord, isRecordWithProperties } from './Record';
 import { SteamApp } from './SteamApp';
 
+interface SteamAppCategory {
+  id: string;
+  description: string;
+}
+
 interface SteamAppGenre {
   id: string;
   description: string;
@@ -22,6 +27,7 @@ export interface SteamAppDetail extends Omit<SteamApp, 'appid'> {
   headerImage: string;
   website: string;
   genres: SteamAppGenre[];
+  categories: SteamAppCategory[];
   releaseDate: SteamAppReleaseDate;
   priceOverview: SteamAppPriceOverview;
 }
@@ -69,6 +75,21 @@ function isSteamAppGenres<T extends Record<keyof V, V>[], V = keyof T[number]>(
   });
 }
 
+function isSteamAppCategories<T extends Record<keyof V, V>[], V = keyof T[number]>(
+  element: unknown,
+): element is SteamAppCategory[] {
+  if (!Array.isArray(element)) {
+    return false;
+  }
+  return element.every((entry) => {
+    if (!isRecordWithProperties(entry, ['id', 'description'] as const)) {
+      return false;
+    }
+    const { id, description } = entry;
+    return typeof id === 'number' && typeof description === 'string';
+  });
+}
+
 function isSteamAppDetail<T extends Record<keyof T, T>>(
   element: unknown,
 ): element is SteamAppDetail {
@@ -81,18 +102,23 @@ function isSteamAppDetail<T extends Record<keyof T, T>>(
       'website',
       'priceOverview',
       'genres',
+      'categories',
     ] as const)
   ) {
     return false;
   }
 
-  const { releaseDate, priceOverview, genres } = element;
+  const { releaseDate, priceOverview, genres, categories } = element;
 
   if (!isSteamAppReleaseDate(releaseDate)) {
     return false;
   }
 
   if (!isSteamAppGenres(genres)) {
+    return false;
+  }
+
+  if (!isSteamAppCategories(categories)) {
     return false;
   }
 
