@@ -13,6 +13,8 @@ import { LikesModel } from './likes.model';
 import { GenreModel } from './genre.model';
 import { CharacterizesModel } from './characterizes.model';
 import { InferAttributes, InferCreationAttributes } from 'sequelize';
+import { CategorizesModel } from './categorizes.model';
+import { CategoryModel } from './category.model';
 
 @Table({ tableName: 'Game' })
 export class GameModel extends Model<
@@ -37,6 +39,9 @@ export class GameModel extends Model<
 
   @BelongsToMany(() => GenreModel, () => CharacterizesModel)
   declare genres?: GenreModel[];
+
+  @BelongsToMany(() => GenreModel, () => CategorizesModel)
+  declare categories?: CategoryModel[];
 
   @BelongsToMany(() => UserModel, () => OwnsModel)
   declare owners?: UserModel[];
