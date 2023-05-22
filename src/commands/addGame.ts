@@ -13,6 +13,7 @@ import { GameModel } from '../configuration/models/game.model';
 import { GenreModel } from '../configuration/models/genre.model';
 import { UserModel } from '../configuration/models/user.model';
 import { ButtonCustomIds, findAndDisplaySteamAppDetails } from '../utils/gameUtils';
+import { CategoryModel } from '../configuration/models/category.model';
 
 const options: Command['options'] = [
   {
@@ -58,10 +59,18 @@ const handleConfirm = async (
   details: SteamAppDetail,
 ): Promise<InteractionResponse> => {
   // upsert genres
-  const genres = await GenreModel.bulkCreate(details.genres, {
-    fields: ['description'],
-    ignoreDuplicates: true,
-  });
+  const genresPromises = details.genres.map(({ description }) =>
+    GenreModel.upsert({ description }),
+  );
+  const genres = (await Promise.all(genresPromises)).map((response) => response[0]);
+
+  // upsert categories
+  const categoriesPromises = details.categories.map(({ description }) =>
+    CategoryModel.upsert({ description }),
+  );
+  const categories = (await Promise.all(categoriesPromises)).map(
+    (response) => response[0],
+  );
 
   // upsert user
   const [user] = await UserModel.upsert({
@@ -80,10 +89,11 @@ const handleConfirm = async (
   // set associations
   await game.$set('owners', [user]);
   await game.$set('genres', genres);
+  await game.$set('categories', categories);
   await game.save();
 
   return interaction.update({
-    content: `Great :thumbsup:! The game ${bold(details.name)} has been added!`,
+    content: `Great! The game ${bold(details.name)} has been added!`,
     embeds: [],
     components: [],
   });
@@ -112,6 +122,7 @@ const run: Command['run'] = async (interaction) => {
 
   // Initial answer (to prevent timeout)
   await interaction.reply({
+    ephemeral: true,
     content: `Looking for "${query ?? 'unknown'}" in the Steam store ...`,
   });
 
