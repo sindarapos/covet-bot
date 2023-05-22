@@ -78,8 +78,8 @@ const handleConfirm = async (
   });
 
   // set associations
-  game.genres = genres;
-  game.owners = [user];
+  await game.$set('owners', [user]);
+  await game.$set('genres', genres);
   await game.save();
 
   return interaction.update({
