@@ -10,10 +10,9 @@ import {
 } from 'discord.js';
 import { SteamAppDetail } from '../SteamAppDetail';
 import { GameModel } from '../configuration/models/game.model';
-import { GenreModel } from '../configuration/models/genre.model';
 import { UserModel } from '../configuration/models/user.model';
 import { ButtonCustomIds, findAndDisplaySteamAppDetails } from '../utils/gameUtils';
-import { CategoryModel } from '../configuration/models/category.model';
+import { AssociationCreateOptions } from 'sequelize-typescript/dist/model/model/association/association-create-options';
 
 const options: Command['options'] = [
   {
@@ -56,22 +55,17 @@ const handleEdit = async (interaction: ButtonInteraction): Promise<InteractionRe
 
 const handleConfirm = async (
   interaction: ButtonInteraction,
-  details: SteamAppDetail,
+  {
+    categories,
+    genres,
+    headerImage,
+    name,
+    releaseDate: { date },
+    shortDescription,
+    steamAppid,
+    priceOverview: { final },
+  }: SteamAppDetail,
 ): Promise<InteractionResponse> => {
-  // upsert genres
-  const genresPromises = details.genres.map(({ description }) =>
-    GenreModel.upsert({ description }),
-  );
-  const genres = (await Promise.all(genresPromises)).map((response) => response[0]);
-
-  // upsert categories
-  const categoriesPromises = details.categories.map(({ description }) =>
-    CategoryModel.upsert({ description }),
-  );
-  const categories = (await Promise.all(categoriesPromises)).map(
-    (response) => response[0],
-  );
-
   // upsert user
   const [user] = await UserModel.upsert({
     discordUserId: interaction.user.id,
@@ -80,20 +74,31 @@ const handleConfirm = async (
 
   // create a new game
   const [game] = await GameModel.upsert({
-    name: details.name,
-    description: details.shortDescription,
-    image: details.headerImage,
-    releaseDate: new Date(details.releaseDate.date),
+    name,
+    description: shortDescription,
+    image: headerImage,
+    releaseDate: new Date(date),
+    steamAppid,
+    price: final / 100,
   });
 
   // set associations
   await game.$set('owners', [user]);
-  await game.$set('genres', genres);
-  await game.$set('categories', categories);
+
+  const createOptions: AssociationCreateOptions = {
+    ignoreDuplicates: true,
+    fields: ['description'],
+  };
+  for (const genre of genres) {
+    await game.$create('genre', genre, createOptions);
+  }
+  for (const category of categories) {
+    await game.$create('category', category, createOptions);
+  }
   await game.save();
 
   return interaction.update({
-    content: `Great! The game ${bold(details.name)} has been added!`,
+    content: `Great, ${bold(name)} has been added!`,
     embeds: [],
     components: [],
   });
@@ -138,6 +143,7 @@ const run: Command['run'] = async (interaction) => {
     await handleInteractionResponse(interaction, message, details);
   } catch (e: unknown) {
     await interaction.followUp({
+      ephemeral: true,
       content: `Ran into an error: ${e}`,
     });
   }

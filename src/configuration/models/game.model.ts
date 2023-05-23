@@ -30,12 +30,17 @@ export class GameModel extends Model<
   @Column(DataType.TEXT)
   declare description: string;
 
+  @Column(DataType.INTEGER)
+  declare steamAppid?: number;
+
   @Column
   declare image?: string;
 
-  @AllowNull(false)
   @Column
-  declare releaseDate: Date;
+  declare releaseDate?: Date;
+
+  @Column(DataType.FLOAT)
+  declare price?: number;
 
   @BelongsToMany(() => GenreModel, () => CharacterizesModel)
   declare genres?: GenreModel[];

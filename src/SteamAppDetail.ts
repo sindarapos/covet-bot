@@ -17,11 +17,14 @@ interface SteamAppReleaseDate {
 }
 
 interface SteamAppPriceOverview {
+  initial: number;
+  final: number;
   initialFormatted: string;
   finalFormatted: string;
 }
 
 export interface SteamAppDetail extends Omit<SteamApp, 'appid'> {
+  steamAppid: number;
   type: string;
   shortDescription: string;
   headerImage: string;
@@ -43,11 +46,23 @@ export type SteamAppDetailResponse = Record<
 function isSteamAppPriceOverview<T extends Record<keyof T, T>>(
   element: unknown,
 ): element is SteamAppPriceOverview {
-  if (!isRecordWithProperties(element, ['initialFormatted', 'finalFormatted'] as const)) {
+  if (
+    !isRecordWithProperties(element, [
+      'initialFormatted',
+      'initial',
+      'finalFormatted',
+      'final',
+    ] as const)
+  ) {
     return false;
   }
-  const { initialFormatted, finalFormatted } = element;
-  return typeof initialFormatted === 'string' && typeof finalFormatted === 'string';
+  const { initialFormatted, finalFormatted, initial, final } = element;
+  return (
+    typeof initialFormatted === 'string' &&
+    typeof finalFormatted === 'string' &&
+    typeof final === 'number' &&
+    typeof initial === 'number'
+  );
 }
 
 function isSteamAppReleaseDate<T extends Record<keyof T, T>>(
@@ -95,6 +110,7 @@ function isSteamAppDetail<T extends Record<keyof T, T>>(
 ): element is SteamAppDetail {
   if (
     !isRecordWithProperties(element, [
+      'steamAppid',
       'headerImage',
       'releaseDate',
       'shortDescription',
