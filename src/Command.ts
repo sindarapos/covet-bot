@@ -6,11 +6,13 @@ import {
 import { hello } from './commands/hello';
 import { findGame } from './commands/findGame';
 import { addGame } from './commands/addGame';
+import { listGames } from './commands/listGames';
 
 export const enum CommandName {
   Hello = 'hello',
   FindGame = 'find',
   AddGame = 'covet',
+  ListGames = 'list',
 }
 
 export interface Command extends ChatInputApplicationCommandData {
@@ -19,4 +21,4 @@ export interface Command extends ChatInputApplicationCommandData {
   autocomplete?: (interaction: AutocompleteInteraction) => Promise<void>;
 }
 
-export const commands: Command[] = [hello, findGame, addGame];
+export const commands: Command[] = [hello, findGame, addGame, listGames];

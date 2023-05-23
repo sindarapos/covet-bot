@@ -1,4 +1,9 @@
 import { SnakeToCamelCase } from '../Record';
+import { CommandName } from '../Command';
+import {
+  chatInputApplicationCommandMention,
+  ChatInputCommandInteraction,
+} from 'discord.js';
 
 export const summaryFormatter = (list: string[], limit = 3, separator = ', '): string => {
   if (list.length <= limit) {
@@ -18,4 +23,22 @@ export const snakeToCamelCase = <T extends string>(value: T): SnakeToCamelCase<T
     }
     return `${accumulator}${result}`;
   }, '') as SnakeToCamelCase<T>;
+};
+
+export const generateChatInputApplicationMention = async <T extends CommandName>(
+  interaction: ChatInputCommandInteraction,
+  commandName: T,
+): Promise<`</${T}:${string}>` | `/${T}`> => {
+  const commands = await interaction.client.application.commands.fetch();
+  const command = commands.find(
+    (command) =>
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-enum-comparison
+      command.name === CommandName.AddGame,
+  );
+
+  if (!command) {
+    return `/${commandName}`;
+  }
+
+  return chatInputApplicationCommandMention(commandName, command.id);
 };

@@ -66,10 +66,11 @@ export const findSteamAppDetails = async (
 
 export const fetchSteamAppDetails = async (
   appid: SteamApp['appid'],
+  countryCode = 'nl',
 ): Promise<SteamAppDetail | undefined> => {
   try {
     const response = await fetch(
-      `https://store.steampowered.com/api/appdetails?appids=${appid}`,
+      `https://store.steampowered.com/api/appdetails?appids=${appid}&cc=${countryCode}`,
     );
     const data: unknown = await response.json();
     if (!isRecord(data)) {

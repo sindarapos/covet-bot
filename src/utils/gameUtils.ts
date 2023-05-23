@@ -3,12 +3,17 @@ import {
   ButtonBuilder,
   ButtonStyle,
   ChatInputCommandInteraction,
+  hyperlink,
   Message,
 } from 'discord.js';
 import { SteamAppDetail } from '../SteamAppDetail';
 import { findSteamAppDetails } from '../services/steamService';
 import { generateSteamAppEmbed } from './steamUtils';
 import { MessageActionRowComponentBuilder } from '@discordjs/builders';
+import { GameModel } from '../configuration/models/game.model';
+import { CategoryModel } from '../configuration/models/category.model';
+import moment from 'moment/moment';
+import { hideLinkEmbed } from '@discordjs/formatters';
 
 export const enum ButtonCustomIds {
   confirm = 'confirm',
@@ -61,4 +66,54 @@ export const findAndDisplaySteamAppDetails = async (
     components: [row],
   });
   return [details, message];
+};
+
+const generateGameListItemTitle = (
+  name: GameModel['name'],
+  steamAppid: GameModel['steamAppid'],
+): string => {
+  if (!steamAppid) {
+    return name;
+  }
+
+  const steamAppUrl = `https://store.steampowered.com/app/${steamAppid}/`;
+  return `${hyperlink(name, hideLinkEmbed(steamAppUrl), 'View the game on steam.')}`;
+};
+
+const generateGameCategoryIcons = (categories?: CategoryModel[]): string => {
+  const isMultiplayer = categories?.some(
+    ({ description }) => description === 'Multi-player',
+  );
+  const isCoop = categories?.some(({ description }) => description === 'Co-op');
+  const isPvP = categories?.some(({ description }) => description === 'PvP');
+  const multiplayerIcon = isMultiplayer ? ':family:' : '';
+  const coopIcon = isCoop ? ':two_hearts:' : '';
+  const pvpIcon = isPvP ? ':crossed_swords:' : '';
+
+  return `${multiplayerIcon} ${coopIcon} ${pvpIcon}`;
+};
+
+const generateGameListItem = ({
+  name,
+  releaseDate,
+  owners,
+  genres,
+  categories,
+  steamAppid,
+  price,
+}: GameModel): string => {
+  const releaseDateMoment = moment(releaseDate);
+  const isPastRelease = releaseDateMoment.isBefore(moment());
+  const fromNow = releaseDateMoment.fromNow();
+  const username = owners?.[0]?.username ?? 'nobody';
+  const genreSummary = genres?.map(({ description }) => description)?.join(', ') ?? '';
+  const categoryIcons = generateGameCategoryIcons(categories);
+  const title = generateGameListItemTitle(name, steamAppid);
+  return `${title} ${categoryIcons}\n${genreSummary}\nRelease${
+    isPastRelease ? 'd' : 's'
+  } ${fromNow} · Added by ${username} · €${price}`;
+};
+
+export const generateGameList = (games: GameModel[]): string => {
+  return games.map(generateGameListItem).join('\n\r');
 };

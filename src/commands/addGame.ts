@@ -10,9 +10,10 @@ import {
 } from 'discord.js';
 import { SteamAppDetail } from '../SteamAppDetail';
 import { GameModel } from '../configuration/models/game.model';
-import { GenreModel } from '../configuration/models/genre.model';
 import { UserModel } from '../configuration/models/user.model';
 import { ButtonCustomIds, findAndDisplaySteamAppDetails } from '../utils/gameUtils';
+import { GenreModel } from '../configuration/models/genre.model';
+import { CategoryModel } from '../configuration/models/category.model';
 
 const options: Command['options'] = [
   {
@@ -55,14 +56,17 @@ const handleEdit = async (interaction: ButtonInteraction): Promise<InteractionRe
 
 const handleConfirm = async (
   interaction: ButtonInteraction,
-  details: SteamAppDetail,
+  {
+    categories: steamAppCategories,
+    genres: steamAppGenres,
+    headerImage,
+    name,
+    releaseDate: { date },
+    shortDescription,
+    steamAppid,
+    priceOverview: { final },
+  }: SteamAppDetail,
 ): Promise<InteractionResponse> => {
-  // upsert genres
-  const genres = await GenreModel.bulkCreate(details.genres, {
-    fields: ['description'],
-    ignoreDuplicates: true,
-  });
-
   // upsert user
   const [user] = await UserModel.upsert({
     discordUserId: interaction.user.id,
@@ -71,19 +75,34 @@ const handleConfirm = async (
 
   // create a new game
   const [game] = await GameModel.upsert({
-    name: details.name,
-    description: details.shortDescription,
-    image: details.headerImage,
-    releaseDate: new Date(details.releaseDate.date),
+    name,
+    description: shortDescription,
+    image: headerImage,
+    releaseDate: new Date(date),
+    steamAppid,
+    price: final / 100,
   });
 
+  // define associations
+  const genres = (
+    await Promise.all(
+      steamAppGenres.map(({ description }) => GenreModel.upsert({ description })),
+    )
+  ).map(([genre]) => genre);
+  const categories = (
+    await Promise.all(
+      steamAppCategories.map(({ description }) => CategoryModel.upsert({ description })),
+    )
+  ).map(([category]) => category);
+
   // set associations
-  game.genres = genres;
-  game.owners = [user];
+  await game.$set('categories', categories);
+  await game.$set('genres', genres);
+  await game.$set('owners', [user]);
   await game.save();
 
   return interaction.update({
-    content: `Great :thumbsup:! The game ${bold(details.name)} has been added!`,
+    content: `Great, ${bold(name)} has been added!`,
     embeds: [],
     components: [],
   });
@@ -112,6 +131,7 @@ const run: Command['run'] = async (interaction) => {
 
   // Initial answer (to prevent timeout)
   await interaction.reply({
+    ephemeral: true,
     content: `Looking for "${query ?? 'unknown'}" in the Steam store ...`,
   });
 
@@ -127,6 +147,7 @@ const run: Command['run'] = async (interaction) => {
     await handleInteractionResponse(interaction, message, details);
   } catch (e: unknown) {
     await interaction.followUp({
+      ephemeral: true,
       content: `Ran into an error: ${e}`,
     });
   }
