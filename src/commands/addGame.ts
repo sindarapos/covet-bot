@@ -12,7 +12,8 @@ import { SteamAppDetail } from '../SteamAppDetail';
 import { GameModel } from '../configuration/models/game.model';
 import { UserModel } from '../configuration/models/user.model';
 import { ButtonCustomIds, findAndDisplaySteamAppDetails } from '../utils/gameUtils';
-import { AssociationCreateOptions } from 'sequelize-typescript/dist/model/model/association/association-create-options';
+import { GenreModel } from '../configuration/models/genre.model';
+import { CategoryModel } from '../configuration/models/category.model';
 
 const options: Command['options'] = [
   {
@@ -56,8 +57,8 @@ const handleEdit = async (interaction: ButtonInteraction): Promise<InteractionRe
 const handleConfirm = async (
   interaction: ButtonInteraction,
   {
-    categories,
-    genres,
+    categories: steamAppCategories,
+    genres: steamAppGenres,
     headerImage,
     name,
     releaseDate: { date },
@@ -82,19 +83,22 @@ const handleConfirm = async (
     price: final / 100,
   });
 
-  // set associations
-  await game.$set('owners', [user]);
+  // define associations
+  const genres = (
+    await Promise.all(
+      steamAppGenres.map(({ description }) => GenreModel.upsert({ description })),
+    )
+  ).map(([genre]) => genre);
+  const categories = (
+    await Promise.all(
+      steamAppCategories.map(({ description }) => CategoryModel.upsert({ description })),
+    )
+  ).map(([category]) => category);
 
-  const createOptions: AssociationCreateOptions = {
-    ignoreDuplicates: true,
-    fields: ['description'],
-  };
-  for (const genre of genres) {
-    await game.$create('genre', genre, createOptions);
-  }
-  for (const category of categories) {
-    await game.$create('category', category, createOptions);
-  }
+  // set associations
+  await game.$set('categories', categories);
+  await game.$set('genres', genres);
+  await game.$set('owners', [user]);
   await game.save();
 
   return interaction.update({
