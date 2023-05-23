@@ -4,7 +4,7 @@ import { ChatInputCommandInteraction } from 'discord.js';
 import { generateChatInputApplicationMention } from '../utils/stringUtils';
 import { generateGameList } from '../utils/gameUtils';
 import { GenreModel } from '../configuration/models/genre.model';
-import { Op } from 'sequelize';
+import { Includeable, Op } from 'sequelize';
 
 const options: Command['options'] = [
   {
@@ -30,13 +30,24 @@ const generateContent = async (
     return `It seems nobody has added any games yet :sweat_smile:. Try adding a game using the ${covetCommandMention} command.`;
   }
 
+  const genre = interaction.options.get('genre')?.value;
+  const genresFilterInclude: Includeable[] = genre
+    ? [
+        {
+          model: GenreModel,
+          where: { description: genre },
+          as: 'genresFilter',
+        },
+      ]
+    : [];
+
   // multiple games found
   const games = await GameModel.findAll({
     order: [['releaseDate', 'DESC']],
-    include: { all: true, nested: true },
+    include: ['genres', 'owners', 'categories', ...genresFilterInclude],
   });
 
-  return `I've found ${gameCount} games that have been coveted:\n\r${generateGameList(
+  return `I've found ${games.length} games that have been coveted:\n\r${generateGameList(
     games,
   )}`;
 };
