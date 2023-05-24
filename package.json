@@ -1,8 +1,7 @@
 {
   "name": "covet-bot",
   "version": "0.0.1",
-  "description": "Discord bot for sharing keeping track of upcomming games",
-  "main": "index.js",
+  "description": "Discord bot for sharing keeping track of upcoming games",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "ts-node src/app.ts"
@@ -10,19 +9,30 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "camelcase-keys": "^7.0.2",
     "discord.js": "^14.9.0",
     "dotenv": "^16.0.3",
-    "fuse.js": "^6.6.2"
+    "fuse.js": "^6.6.2",
+    "moment": "^2.29.4",
+    "pg": "^8.10.0",
+    "pg-hstore": "^2.3.4",
+    "prettier": "^2.8.8",
+    "reflect-metadata": "^0.1.13",
+    "sequelize": "^6.31.1",
+    "sequelize-typescript": "^2.1.5"
   },
   "devDependencies": {
     "@babel/core": "^7.21.4",
     "@babel/eslint-parser": "^7.21.3",
     "@babel/eslint-plugin": "^7.19.1",
     "@types/node": "^18.15.11",
+    "@types/validator": "^13.7.15",
     "@typescript-eslint/eslint-plugin": "^5.59.1",
     "@typescript-eslint/parser": "^5.59.1",
     "eslint": "^8.38.0",
     "eslint-config-prettier": "^8.8.0",
+    "eslint-import-resolver-typescript": "^3.5.5",
+    "eslint-plugin-import": "^2.27.5",
     "eslint-plugin-prettier": "^4.2.1",
     "ts-node": "^10.9.1",
     "typescript": "^5.0.4"

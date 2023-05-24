@@ -1,25 +1,82 @@
-import Fuse from 'fuse.js';
-import { SteamApp } from '../SteamApp';
+import { SteamAppDetail } from '../SteamAppDetail';
+import {
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  ChatInputCommandInteraction,
+  EmbedBuilder,
+  Message,
+} from 'discord.js';
+import { findSteamAppDetails } from '../services/steamService';
+import { ButtonCustomIds, generateGameEmbeds } from './gameUtils';
+import { MessageActionRowComponentBuilder } from '@discordjs/builders';
 
-export const querySteamApps = (apps: SteamApp[], query: string): SteamApp[] => {
-  const fuse = new Fuse(apps, { keys: ['name'], shouldSort: true, findAllMatches: true, threshold: 0.1 });
-  return fuse.search(query)?.map((fuseResult) => fuseResult.item);
+export const generateSteamAppEmbed = ({
+  name,
+  shortDescription,
+  headerImage,
+  genres,
+  releaseDate: { date, comingSoon },
+  priceOverview: { finalFormatted },
+  website,
+}: SteamAppDetail): EmbedBuilder => {
+  const genresMessage = genres.map(({ description }) => description).join(', ');
+  return new EmbedBuilder()
+    .setTitle(name)
+    .setDescription(shortDescription)
+    .setImage(headerImage)
+    .setFields(
+      { name: 'Genres', value: genresMessage },
+      { name: 'Release date', value: comingSoon ? 'coming soon' : date, inline: true },
+      { name: 'Price', value: finalFormatted, inline: true },
+    )
+    .setURL(website);
 };
 
-export const fetchSteamApps = async (): Promise<SteamApp[]> => {
-  try {
-    const response = await fetch(
-      'https://api.steampowered.com/ISteamApps/GetAppList/v0002/?format=json',
+const generateCreationActionRow =
+  (): ActionRowBuilder<MessageActionRowComponentBuilder> => {
+    const confirm = new ButtonBuilder()
+      .setCustomId(ButtonCustomIds.confirm)
+      .setLabel('Add')
+      .setStyle(ButtonStyle.Success);
+
+    const edit = new ButtonBuilder()
+      .setCustomId(ButtonCustomIds.edit)
+      .setLabel('Edit')
+      .setStyle(ButtonStyle.Primary);
+
+    const cancel = new ButtonBuilder()
+      .setCustomId(ButtonCustomIds.cancel)
+      .setLabel('Cancel')
+      .setStyle(ButtonStyle.Secondary);
+
+    return new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
+      cancel,
+      edit,
+      confirm,
     );
-    const data = await response.json();
-    return data?.applist?.apps ?? [];
-  }
-  catch (e) {
-    throw new Error(`I was unable to contact steam: ${e}`);
-  }
-};
+  };
 
-export const findSteamApps = async (query: string): Promise<SteamApp[]> => {
-  const apps = await fetchSteamApps();
-  return querySteamApps(apps, query);
+export const findAndDisplaySteamAppDetails = async (
+  interaction: ChatInputCommandInteraction,
+  query: string,
+  content = "Is this the game you'd like to add?",
+): Promise<[SteamAppDetail | undefined, Message]> => {
+  const details = await findSteamAppDetails(query);
+
+  if (!details) {
+    const message = await interaction.editReply({
+      content: `Sorry, I wasn't able to find "${query}" in the Steam store :sweat:.`,
+    });
+    return [details, message];
+  }
+
+  const embeds = generateGameEmbeds([details]);
+  const row = generateCreationActionRow();
+  const message = await interaction.editReply({
+    content,
+    embeds,
+    components: [row],
+  });
+  return [details, message];
 };
