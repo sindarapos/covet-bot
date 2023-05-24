@@ -71,6 +71,12 @@ export const findAndDisplaySteamAppDetails = async (
   return [details, message];
 };
 
+export const generateSteamAppUrl = (
+  steamAppid: NonNullable<GameModel['steamAppid']>,
+): string => {
+  return `https://store.steampowered.com/app/${steamAppid}/`;
+};
+
 const generateGameListItemTitle = (
   name: GameModel['name'],
   steamAppid: GameModel['steamAppid'],
@@ -79,7 +85,7 @@ const generateGameListItemTitle = (
     return name;
   }
 
-  const steamAppUrl = `https://store.steampowered.com/app/${steamAppid}/`;
+  const steamAppUrl = generateSteamAppUrl(steamAppid);
   return `${hyperlink(name, hideLinkEmbed(steamAppUrl), 'View the game on steam.')}`;
 };
 
