@@ -1,8 +1,23 @@
 import { Command, CommandName } from '../Command';
-import { bold, ChatInputCommandInteraction, EmbedBuilder } from 'discord.js';
+import {
+  ActionRowBuilder,
+  bold,
+  ButtonBuilder,
+  ButtonStyle,
+  ChatInputCommandInteraction,
+  InteractionEditReplyOptions,
+  userMention,
+} from 'discord.js';
 import { GameModel } from '../configuration/models/game.model';
-import { generateGameEmbed, handleEmptyGameCount } from '../utils/gameUtils';
+import {
+  ButtonCustomIds,
+  generateEmptyGameListContent,
+  generateGameEmbeds,
+} from '../utils/gameUtils';
 import { Op } from 'sequelize';
+import { isEmptyGameList } from '../services/gameService';
+import { MessageActionRowComponentBuilder } from '@discordjs/builders';
+import { generateInitiatorMessageComponentCollector } from '../utils/commandUtils';
 
 const options: Command['options'] = [
   {
@@ -14,32 +29,60 @@ const options: Command['options'] = [
   },
 ];
 
-const generateGameContent = async (
+const generateContent = (game: GameModel | undefined | null, query: string): string => {
+  if (!game) {
+    `The game ${bold(query)} has not yet been coveted!`;
+  }
+
+  return 'There you go!';
+};
+
+const generateGameViewActionRow =
+  (): ActionRowBuilder<MessageActionRowComponentBuilder> => {
+    const share = new ButtonBuilder()
+      .setCustomId(ButtonCustomIds.share)
+      .setLabel('Broadcast')
+      .setStyle(ButtonStyle.Primary)
+      .setEmoji('📢');
+
+    const edit = new ButtonBuilder()
+      .setCustomId(ButtonCustomIds.edit)
+      .setLabel('Edit')
+      .setStyle(ButtonStyle.Secondary)
+      .setEmoji('📝');
+
+    const remove = new ButtonBuilder()
+      .setCustomId(ButtonCustomIds.delete)
+      .setLabel('Remove')
+      .setStyle(ButtonStyle.Danger)
+      .setEmoji('✖️');
+
+    return new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
+      remove,
+      edit,
+      share,
+    );
+  };
+
+const generateReply = async (
   interaction: ChatInputCommandInteraction,
-): Promise<[string] | [string, EmbedBuilder[]]> => {
+): Promise<InteractionEditReplyOptions> => {
   const name = interaction.options.get('name')?.value ?? 'unknown';
   const game = await GameModel.findOne({
     where: { name },
     include: { all: true, nested: true },
   });
 
-  if (!game) {
-    return [`The game ${bold(name.toString())} has not yet been coveted!`];
-  }
-
-  return ['Here you go! \n\r ', [generateGameEmbed(game)]];
-};
-
-const generateContent = async (
-  interaction: ChatInputCommandInteraction,
-): ReturnType<typeof generateGameContent> => {
-  const result = await handleEmptyGameCount(interaction, () =>
-    generateGameContent(interaction),
-  );
-  if (Array.isArray(result)) {
-    return result;
-  }
-  return [result];
+  const content = generateContent(game, name.toString());
+  const embeds = generateGameEmbeds([game]);
+  const components: InteractionEditReplyOptions['components'] = [
+    generateGameViewActionRow(),
+  ];
+  return {
+    content,
+    embeds,
+    components,
+  };
 };
 
 const run: Command['run'] = async (interaction) => {
@@ -49,11 +92,38 @@ const run: Command['run'] = async (interaction) => {
     content: 'Fetching the game list ...',
   });
 
-  const [content, embeds = []] = await generateContent(interaction);
-  await interaction.editReply({
-    content,
-    embeds,
-  });
+  if (await isEmptyGameList()) {
+    await interaction.editReply(await generateEmptyGameListContent(interaction));
+    return;
+  }
+
+  const reply = await generateReply(interaction);
+  const message = await interaction.editReply(reply);
+
+  const buttonInteraction = await generateInitiatorMessageComponentCollector(
+    message,
+    interaction,
+  );
+
+  switch (buttonInteraction.customId) {
+    case ButtonCustomIds.share:
+      await interaction.deleteReply(message);
+      await interaction.followUp({
+        ...reply,
+        content: `Hey everyone, ${userMention(
+          interaction.user.id,
+        )} wants to let you know about:`,
+        components: [],
+      });
+      break;
+    case ButtonCustomIds.edit:
+      await interaction.editReply('Sorry :cry:! This feature is not yet implemented.');
+      break;
+    default:
+    case ButtonCustomIds.delete:
+      await interaction.editReply('Sorry :cry:! This feature is not yet implemented.');
+      break;
+  }
 };
 
 const autocomplete: Command['autocomplete'] = async (interaction) => {

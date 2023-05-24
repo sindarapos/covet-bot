@@ -12,6 +12,8 @@ export const enum ButtonCustomIds {
   confirm = 'confirm',
   edit = 'edit',
   cancel = 'cancel',
+  delete = 'delete',
+  share = 'share',
 }
 
 export const generateGameEmbed = (
