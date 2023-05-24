@@ -14,7 +14,7 @@
     "allowSyntheticDefaultImports": true,
     "noEmit": false,
     "emitDeclarationOnly": false,
-    "allowImportingTsExtensions": true,
+    "allowImportingTsExtensions": false,
     "resolveJsonModule": true,
     "forceConsistentCasingInFileNames": true,
     "removeComments": true,
