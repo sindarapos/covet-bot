@@ -16,9 +16,12 @@ export const fetchSteamApps = async (): Promise<SteamApp[]> => {
       'https://api.steampowered.com/ISteamApps/GetAppList/v0002/?format=json',
     );
     const data = (await response.json()) as unknown;
+    console.log('done fetching steam games');
+    console.log('validating response');
     if (!isSteamAppList(data)) {
       return [];
     }
+    console.log('done checking response');
     return data.applist.apps;
   } catch (e) {
     throw new Error(`I was unable to contact steam: ${e}`);
