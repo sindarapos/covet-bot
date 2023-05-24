@@ -13,7 +13,12 @@ export const enum ButtonCustomIds {
   cancel = 'cancel',
 }
 
-export const generateGameEmbed = (content: GameModel | SteamAppDetail): EmbedBuilder => {
+export const generateGameEmbed = (
+  content: GameModel | SteamAppDetail | null | undefined,
+): EmbedBuilder | undefined => {
+  if (!content) {
+    return;
+  }
   const { name, steamAppid, genres = [] } = content;
 
   let description;
@@ -60,6 +65,18 @@ export const generateGameEmbed = (content: GameModel | SteamAppDetail): EmbedBui
     )
     .setURL(steamAppid ? generateSteamAppUrl(steamAppid) : null)
     .setFooter({ text: `added by ${owner}` });
+};
+
+export const generateGameEmbeds = (
+  contents: (GameModel | SteamAppDetail | null | undefined)[],
+): EmbedBuilder[] => {
+  return contents.reduce<EmbedBuilder[]>((accumulator, content) => {
+    const embed = generateGameEmbed(content);
+    if (!embed) {
+      return accumulator;
+    }
+    return [...accumulator, embed];
+  }, []);
 };
 
 export const generateSteamAppUrl = (

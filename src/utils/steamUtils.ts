@@ -8,7 +8,7 @@ import {
   Message,
 } from 'discord.js';
 import { findSteamAppDetails } from '../services/steamService';
-import { ButtonCustomIds, generateGameEmbed } from './gameUtils';
+import { ButtonCustomIds, generateGameEmbed, generateGameEmbeds } from './gameUtils';
 import { MessageActionRowComponentBuilder } from '@discordjs/builders';
 
 export const generateSteamAppEmbed = ({
@@ -71,11 +71,11 @@ export const findAndDisplaySteamAppDetails = async (
     return [details, message];
   }
 
-  const embed = generateGameEmbed(details);
+  const embeds = generateGameEmbeds([details]);
   const row = generateCreationActionRow();
   const message = await interaction.editReply({
     content,
-    embeds: [embed],
+    embeds,
     components: [row],
   });
   return [details, message];
