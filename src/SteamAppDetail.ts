@@ -105,7 +105,7 @@ function isSteamAppCategories<T extends Record<keyof V, V>[], V = keyof T[number
   });
 }
 
-function isSteamAppDetail<T extends Record<keyof T, T>>(
+export function isSteamAppDetail<T extends Record<keyof T, T>>(
   element: unknown,
 ): element is SteamAppDetail {
   if (

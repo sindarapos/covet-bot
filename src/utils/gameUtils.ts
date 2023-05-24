@@ -1,71 +1,91 @@
-import {
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  ChatInputCommandInteraction,
-  hyperlink,
-  Message,
-} from 'discord.js';
-import { SteamAppDetail } from '../SteamAppDetail';
-import { findSteamAppDetails } from '../services/steamService';
-import { generateSteamAppEmbed } from './steamUtils';
-import { MessageActionRowComponentBuilder } from '@discordjs/builders';
+import { ChatInputCommandInteraction, EmbedBuilder, hyperlink } from 'discord.js';
+import { isSteamAppDetail, SteamAppDetail } from '../SteamAppDetail';
 import { GameModel } from '../configuration/models/game.model';
 import { CategoryModel } from '../configuration/models/category.model';
-import moment from 'moment/moment';
 import { hideLinkEmbed } from '@discordjs/formatters';
+import { generateChatInputApplicationMention } from './stringUtils';
+import { CommandName } from '../Command';
+import moment from 'moment';
+import { isEmptyGameList } from '../services/gameService';
 
 export const enum ButtonCustomIds {
   confirm = 'confirm',
   edit = 'edit',
   cancel = 'cancel',
+  delete = 'delete',
+  share = 'share',
 }
 
-const generateActionRow = (): ActionRowBuilder<MessageActionRowComponentBuilder> => {
-  const confirm = new ButtonBuilder()
-    .setCustomId(ButtonCustomIds.confirm)
-    .setLabel('Add')
-    .setStyle(ButtonStyle.Success);
+export const generateGameEmbed = (
+  content: GameModel | SteamAppDetail | null | undefined,
+): EmbedBuilder | undefined => {
+  if (!content) {
+    return;
+  }
+  const { name, steamAppid, genres = [] } = content;
 
-  const edit = new ButtonBuilder()
-    .setCustomId(ButtonCustomIds.edit)
-    .setLabel('Edit')
-    .setStyle(ButtonStyle.Primary);
+  let description;
+  let image;
+  let releaseDate;
+  let price;
+  let owner;
+  let icons;
 
-  const cancel = new ButtonBuilder()
-    .setCustomId(ButtonCustomIds.cancel)
-    .setLabel('Cancel')
-    .setStyle(ButtonStyle.Secondary);
+  const genresMessage = genres.map(({ description }) => description).join(', ');
 
-  return new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
-    cancel,
-    edit,
-    confirm,
-  );
-};
-
-export const findAndDisplaySteamAppDetails = async (
-  interaction: ChatInputCommandInteraction,
-  query: string,
-  content = "Is this the game you'd like to add?",
-): Promise<[SteamAppDetail | undefined, Message]> => {
-  const details = await findSteamAppDetails(query);
-
-  if (!details) {
-    const message = await interaction.editReply({
-      content: `Sorry, I wasn't able to find "${query}" in the Steam store :sweat:.`,
-    });
-    return [details, message];
+  // deal with fields that do not have the same name
+  if (isSteamAppDetail(content)) {
+    const {
+      shortDescription,
+      headerImage,
+      releaseDate: { date, comingSoon },
+      priceOverview: { finalFormatted },
+    } = content;
+    description = shortDescription;
+    image = headerImage;
+    releaseDate = comingSoon ? 'coming soon' : date;
+    price = finalFormatted;
+    owner = 'Steam';
+  } else {
+    description = content.description;
+    image = content.image;
+    releaseDate = content.releaseDate
+      ? moment(content.releaseDate).fromNow()
+      : 'coming soon';
+    price = content.price?.toString() ?? '?';
+    owner = content.owners?.[0]?.username ?? 'nobody';
+    icons = generateGameCategoryIcons(content.categories);
   }
 
-  const embed = generateSteamAppEmbed(details);
-  const row = generateActionRow();
-  const message = await interaction.editReply({
-    content,
-    embeds: [embed],
-    components: [row],
-  });
-  return [details, message];
+  return new EmbedBuilder()
+    .setTitle(`${name} ${icons}`)
+    .setDescription(description)
+    .setImage(image ?? null)
+    .setFields(
+      { name: 'Genres', value: genresMessage },
+      { name: 'Release date', value: releaseDate, inline: true },
+      { name: 'Price', value: `€${price}`, inline: true },
+    )
+    .setURL(steamAppid ? generateSteamAppUrl(steamAppid) : null)
+    .setFooter({ text: `added by ${owner}` });
+};
+
+export const generateGameEmbeds = (
+  contents: (GameModel | SteamAppDetail | null | undefined)[],
+): EmbedBuilder[] => {
+  return contents.reduce<EmbedBuilder[]>((accumulator, content) => {
+    const embed = generateGameEmbed(content);
+    if (!embed) {
+      return accumulator;
+    }
+    return [...accumulator, embed];
+  }, []);
+};
+
+export const generateSteamAppUrl = (
+  steamAppid: NonNullable<GameModel['steamAppid']>,
+): string => {
+  return `https://store.steampowered.com/app/${steamAppid}/`;
 };
 
 const generateGameListItemTitle = (
@@ -76,7 +96,7 @@ const generateGameListItemTitle = (
     return name;
   }
 
-  const steamAppUrl = `https://store.steampowered.com/app/${steamAppid}/`;
+  const steamAppUrl = generateSteamAppUrl(steamAppid);
   return `${hyperlink(name, hideLinkEmbed(steamAppUrl), 'View the game on steam.')}`;
 };
 
@@ -116,4 +136,27 @@ const generateGameListItem = ({
 
 export const generateGameList = (games: GameModel[]): string => {
   return games.map(generateGameListItem).join('\n\r');
+};
+
+export const generateEmptyGameListContent = async (
+  interaction: ChatInputCommandInteraction,
+): Promise<string> => {
+  const covetCommandMention = await generateChatInputApplicationMention(
+    interaction,
+    CommandName.AddGame,
+  );
+
+  return `It seems nobody has added any games yet :sweat_smile:. Try adding a game using the ${covetCommandMention} command.`;
+};
+
+export const handleEmptyGameCount = async <T extends () => ReturnType<T>>(
+  interaction: ChatInputCommandInteraction,
+  fn: T,
+): Promise<ReturnType<T> | string> => {
+  // no game found
+  if (await isEmptyGameList()) {
+    return generateEmptyGameListContent(interaction);
+  }
+
+  return fn();
 };

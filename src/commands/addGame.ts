@@ -11,9 +11,11 @@ import {
 import { SteamAppDetail } from '../SteamAppDetail';
 import { GameModel } from '../configuration/models/game.model';
 import { UserModel } from '../configuration/models/user.model';
-import { ButtonCustomIds, findAndDisplaySteamAppDetails } from '../utils/gameUtils';
+import { ButtonCustomIds } from '../utils/gameUtils';
 import { GenreModel } from '../configuration/models/genre.model';
 import { CategoryModel } from '../configuration/models/category.model';
+import { findAndDisplaySteamAppDetails } from '../utils/steamUtils';
+import { generateInitiatorMessageComponentCollector } from '../utils/commandUtils';
 
 const options: Command['options'] = [
   {
@@ -24,16 +26,6 @@ const options: Command['options'] = [
     autocomplete: true,
   },
 ];
-
-const generateResponseCollector = async (
-  message: Message,
-  interaction: ChatInputCommandInteraction,
-): Promise<ButtonInteraction> => {
-  return await message.awaitMessageComponent<2>({
-    filter: (i) => i.user.id === interaction.user.id,
-    time: 300000,
-  });
-};
 
 const handleCancel = async (
   interaction: ButtonInteraction,
@@ -113,7 +105,7 @@ const handleInteractionResponse = async (
   message: Message,
   details: SteamAppDetail,
 ): Promise<InteractionResponse> => {
-  const confirm = await generateResponseCollector(message, interaction);
+  const confirm = await generateInitiatorMessageComponentCollector(message, interaction);
   switch (confirm.customId) {
     case ButtonCustomIds.confirm:
       return handleConfirm(confirm, details);
@@ -139,18 +131,11 @@ const run: Command['run'] = async (interaction) => {
     return;
   }
 
-  try {
-    const [details, message] = await findAndDisplaySteamAppDetails(interaction, query);
-    if (!details) {
-      return;
-    }
-    await handleInteractionResponse(interaction, message, details);
-  } catch (e: unknown) {
-    await interaction.followUp({
-      ephemeral: true,
-      content: `Ran into an error: ${e}`,
-    });
+  const [details, message] = await findAndDisplaySteamAppDetails(interaction, query);
+  if (!details) {
+    return;
   }
+  await handleInteractionResponse(interaction, message, details);
 };
 
 export const addGame: Command = {
