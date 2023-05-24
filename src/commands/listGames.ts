@@ -1,8 +1,7 @@
 import { Command, CommandName } from '../Command';
 import { GameModel } from '../configuration/models/game.model';
 import { ChatInputCommandInteraction } from 'discord.js';
-import { generateChatInputApplicationMention } from '../utils/stringUtils';
-import { generateGameList } from '../utils/gameUtils';
+import { generateGameList, handleEmptyGameCount } from '../utils/gameUtils';
 import { GenreModel } from '../configuration/models/genre.model';
 import { Includeable, Op } from 'sequelize';
 
@@ -16,20 +15,9 @@ const options: Command['options'] = [
   },
 ];
 
-const generateContent = async (
+const generateGameContent = async (
   interaction: ChatInputCommandInteraction,
 ): Promise<string> => {
-  const gameCount = await GameModel.count();
-  const covetCommandMention = await generateChatInputApplicationMention(
-    interaction,
-    CommandName.AddGame,
-  );
-
-  // no game found
-  if (gameCount === 0) {
-    return `It seems nobody has added any games yet :sweat_smile:. Try adding a game using the ${covetCommandMention} command.`;
-  }
-
   const genre = interaction.options.get('genre')?.value;
   const genresFilterInclude: Includeable[] = genre
     ? [
@@ -50,6 +38,12 @@ const generateContent = async (
   return `I've found ${games.length} games that have been coveted:\n\r${generateGameList(
     games,
   )}`;
+};
+
+const generateContent = async (
+  interaction: ChatInputCommandInteraction,
+): Promise<string> => {
+  return handleEmptyGameCount(interaction, () => generateGameContent(interaction));
 };
 
 const run: Command['run'] = async (interaction) => {

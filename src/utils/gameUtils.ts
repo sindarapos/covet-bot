@@ -14,6 +14,9 @@ import { GameModel } from '../configuration/models/game.model';
 import { CategoryModel } from '../configuration/models/category.model';
 import moment from 'moment/moment';
 import { hideLinkEmbed } from '@discordjs/formatters';
+import { generateChatInputApplicationMention } from './stringUtils';
+import { CommandName } from '../Command';
+import moment from 'moment';
 
 export const enum ButtonCustomIds {
   confirm = 'confirm',
@@ -116,4 +119,22 @@ const generateGameListItem = ({
 
 export const generateGameList = (games: GameModel[]): string => {
   return games.map(generateGameListItem).join('\n\r');
+};
+
+export const handleEmptyGameCount = async <T extends () => ReturnType<T>>(
+  interaction: ChatInputCommandInteraction,
+  fn: T,
+): Promise<ReturnType<T> | string> => {
+  const gameCount = await GameModel.count();
+  const covetCommandMention = await generateChatInputApplicationMention(
+    interaction,
+    CommandName.AddGame,
+  );
+
+  // no game found
+  if (gameCount === 0) {
+    return `It seems nobody has added any games yet :sweat_smile:. Try adding a game using the ${covetCommandMention} command.`;
+  }
+
+  return fn();
 };
