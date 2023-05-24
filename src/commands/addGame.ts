@@ -11,9 +11,10 @@ import {
 import { SteamAppDetail } from '../SteamAppDetail';
 import { GameModel } from '../configuration/models/game.model';
 import { UserModel } from '../configuration/models/user.model';
-import { ButtonCustomIds, findAndDisplaySteamAppDetails } from '../utils/gameUtils';
+import { ButtonCustomIds } from '../utils/gameUtils';
 import { GenreModel } from '../configuration/models/genre.model';
 import { CategoryModel } from '../configuration/models/category.model';
+import { findAndDisplaySteamAppDetails } from '../utils/steamUtils';
 
 const options: Command['options'] = [
   {
