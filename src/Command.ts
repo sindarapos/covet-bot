@@ -13,6 +13,7 @@ export const enum CommandName {
   FindGame = 'find',
   AddGame = 'covet',
   ListGames = 'list',
+  ViewGame = 'view',
 }
 
 export interface Command extends ChatInputApplicationCommandData {
