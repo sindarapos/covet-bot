@@ -108,7 +108,7 @@ const run: Command['run'] = async (interaction) => {
   switch (buttonInteraction.customId) {
     case ButtonCustomIds.share:
       await interaction.deleteReply(message);
-      await interaction.followUp({
+      await buttonInteraction.reply({
         ...reply,
         content: `Hey everyone, ${userMention(
           interaction.user.id,
@@ -117,11 +117,19 @@ const run: Command['run'] = async (interaction) => {
       });
       break;
     case ButtonCustomIds.edit:
-      await interaction.editReply('Sorry :cry:! This feature is not yet implemented.');
+      await buttonInteraction.update({
+        content: 'Sorry :cry:! This feature is not yet implemented.',
+        components: [],
+        embeds: [],
+      });
       break;
     default:
     case ButtonCustomIds.delete:
-      await interaction.editReply('Sorry :cry:! This feature is not yet implemented.');
+      await buttonInteraction.update({
+        content: 'Sorry :cry:! This feature is not yet implemented.',
+        components: [],
+        embeds: [],
+      });
       break;
   }
 };
