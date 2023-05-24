@@ -3,16 +3,15 @@ import {
   ButtonBuilder,
   ButtonStyle,
   ChatInputCommandInteraction,
+  EmbedBuilder,
   hyperlink,
   Message,
 } from 'discord.js';
-import { SteamAppDetail } from '../SteamAppDetail';
+import { isSteamAppDetail, SteamAppDetail } from '../SteamAppDetail';
 import { findSteamAppDetails } from '../services/steamService';
-import { generateSteamAppEmbed } from './steamUtils';
 import { MessageActionRowComponentBuilder } from '@discordjs/builders';
 import { GameModel } from '../configuration/models/game.model';
 import { CategoryModel } from '../configuration/models/category.model';
-import moment from 'moment/moment';
 import { hideLinkEmbed } from '@discordjs/formatters';
 import { generateChatInputApplicationMention } from './stringUtils';
 import { CommandName } from '../Command';
@@ -47,6 +46,54 @@ const generateActionRow = (): ActionRowBuilder<MessageActionRowComponentBuilder>
   );
 };
 
+export const generateGameEmbed = (content: GameModel | SteamAppDetail): EmbedBuilder => {
+  const { name, steamAppid, genres = [] } = content;
+
+  let description;
+  let image;
+  let releaseDate;
+  let price;
+  let owner;
+  let icons;
+
+  const genresMessage = genres.map(({ description }) => description).join(', ');
+
+  // deal with fields that do not have the same name
+  if (isSteamAppDetail(content)) {
+    const {
+      shortDescription,
+      headerImage,
+      releaseDate: { date, comingSoon },
+      priceOverview: { finalFormatted },
+    } = content;
+    description = shortDescription;
+    image = headerImage;
+    releaseDate = comingSoon ? 'coming soon' : date;
+    price = finalFormatted;
+    owner = 'Steam';
+  } else {
+    description = content.description;
+    image = content.image;
+    releaseDate = content.releaseDate
+      ? moment(content.releaseDate).fromNow()
+      : 'coming soon';
+    price = content.price?.toString() ?? '?';
+    owner = content.owners?.[0]?.username ?? 'nobody';
+    icons = generateGameCategoryIcons(content.categories);
+  }
+
+  return new EmbedBuilder()
+    .setTitle(`${name} ${icons}`)
+    .setDescription(description)
+    .setImage(image ?? null)
+    .setFields(
+      { name: 'Genres', value: genresMessage },
+      { name: 'Release date', value: releaseDate, inline: true },
+      { name: 'Price', value: `€${price}`, inline: true },
+    )
+    .setURL(steamAppid ? generateSteamAppUrl(steamAppid) : null)
+    .setFooter({ text: `added by ${owner}` });
+};
 export const findAndDisplaySteamAppDetails = async (
   interaction: ChatInputCommandInteraction,
   query: string,
@@ -61,7 +108,7 @@ export const findAndDisplaySteamAppDetails = async (
     return [details, message];
   }
 
-  const embed = generateSteamAppEmbed(details);
+  const embed = generateGameEmbed(details);
   const row = generateActionRow();
   const message = await interaction.editReply({
     content,
