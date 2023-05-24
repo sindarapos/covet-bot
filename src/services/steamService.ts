@@ -11,6 +11,7 @@ import Fuse from 'fuse.js';
 
 export const fetchSteamApps = async (): Promise<SteamApp[]> => {
   try {
+    console.log('fetching steam games');
     const response = await fetch(
       'https://api.steampowered.com/ISteamApps/GetAppList/v0002/?format=json',
     );
