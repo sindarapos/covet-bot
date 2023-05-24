@@ -54,11 +54,14 @@ const run: Command['run'] = async (interaction) => {
 
 const autocomplete: Command['autocomplete'] = async (interaction) => {
   const focussedValue = interaction.options.getFocused();
+  console.log('finding steam apps');
   const apps = await findSteamApps(focussedValue);
+  console.log('found', apps.length, 'steam apps');
   const autocompleteOptions = apps.slice(0, maxAutocompleteSuggestions).map((app) => ({
     name: app.name,
     value: app.name,
   }));
+  console.log('generated autocomplete options', JSON.stringify(autocompleteOptions));
   await interaction.respond(autocompleteOptions);
 };
 
