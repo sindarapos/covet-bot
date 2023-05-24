@@ -49,18 +49,11 @@ const run: Command['run'] = async (interaction) => {
     content: 'Fetching the game list ...',
   });
 
-  try {
-    const [content, embeds = []] = await generateContent(interaction);
-    await interaction.editReply({
-      content,
-      embeds,
-    });
-  } catch (e: unknown) {
-    await interaction.followUp({
-      ephemeral: true,
-      content: `Ran into an error: ${e}`,
-    });
-  }
+  const [content, embeds = []] = await generateContent(interaction);
+  await interaction.editReply({
+    content,
+    embeds,
+  });
 };
 
 const autocomplete: Command['autocomplete'] = async (interaction) => {

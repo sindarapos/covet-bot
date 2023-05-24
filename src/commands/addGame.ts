@@ -140,18 +140,11 @@ const run: Command['run'] = async (interaction) => {
     return;
   }
 
-  try {
-    const [details, message] = await findAndDisplaySteamAppDetails(interaction, query);
-    if (!details) {
-      return;
-    }
-    await handleInteractionResponse(interaction, message, details);
-  } catch (e: unknown) {
-    await interaction.followUp({
-      ephemeral: true,
-      content: `Ran into an error: ${e}`,
-    });
+  const [details, message] = await findAndDisplaySteamAppDetails(interaction, query);
+  if (!details) {
+    return;
   }
+  await handleInteractionResponse(interaction, message, details);
 };
 
 export const addGame: Command = {

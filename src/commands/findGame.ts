@@ -45,19 +45,11 @@ const run: Command['run'] = async (interaction) => {
     return;
   }
 
-  try {
-    const apps = await findSteamApps(query);
-    const content = generateContent(apps, query);
-
-    await interaction.editReply({
-      content,
-    });
-  } catch (e: unknown) {
-    await interaction.followUp({
-      ephemeral: true,
-      content: `Ran into an error: ${e}`,
-    });
-  }
+  const apps = await findSteamApps(query);
+  const content = generateContent(apps, query);
+  await interaction.editReply({
+    content,
+  });
 };
 
 const autocomplete: Command['autocomplete'] = async (interaction) => {
