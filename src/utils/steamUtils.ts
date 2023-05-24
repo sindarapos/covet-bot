@@ -8,7 +8,7 @@ import {
   Message,
 } from 'discord.js';
 import { findSteamAppDetails } from '../services/steamService';
-import { ButtonCustomIds, generateGameEmbed, generateGameEmbeds } from './gameUtils';
+import { ButtonCustomIds, generateGameEmbeds } from './gameUtils';
 import { MessageActionRowComponentBuilder } from '@discordjs/builders';
 
 export const generateSteamAppEmbed = ({
