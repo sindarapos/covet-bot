@@ -15,6 +15,7 @@ export const enum CommandName {
   AddGame = 'covet',
   ListGames = 'list',
   ViewGame = 'view',
+  DeleteGame = 'remove',
 }
 
 export interface Command extends ChatInputApplicationCommandData {
