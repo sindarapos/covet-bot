@@ -8,6 +8,7 @@ import { findGame } from './commands/findGame';
 import { addGame } from './commands/addGame';
 import { listGames } from './commands/listGames';
 import { viewGame } from './commands/viewGame';
+import { deleteGame } from './commands/deleteGame';
 
 export const enum CommandName {
   Hello = 'hello',
@@ -24,4 +25,11 @@ export interface Command extends ChatInputApplicationCommandData {
   autocomplete?: (interaction: AutocompleteInteraction) => Promise<void>;
 }
 
-export const commands: Command[] = [hello, findGame, addGame, listGames, viewGame];
+export const commands: Command[] = [
+  hello,
+  findGame,
+  addGame,
+  listGames,
+  viewGame,
+  deleteGame,
+];
