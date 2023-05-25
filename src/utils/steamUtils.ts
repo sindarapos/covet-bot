@@ -38,17 +38,20 @@ const generateCreationActionRow =
     const confirm = new ButtonBuilder()
       .setCustomId(ButtonCustomIds.confirm)
       .setLabel('Add')
-      .setStyle(ButtonStyle.Success);
+      .setStyle(ButtonStyle.Success)
+      .setEmoji('🔥');
 
     const edit = new ButtonBuilder()
       .setCustomId(ButtonCustomIds.edit)
       .setLabel('Edit')
-      .setStyle(ButtonStyle.Primary);
+      .setStyle(ButtonStyle.Primary)
+      .setEmoji('📝');
 
     const cancel = new ButtonBuilder()
       .setCustomId(ButtonCustomIds.cancel)
       .setLabel('Cancel')
-      .setStyle(ButtonStyle.Secondary);
+      .setStyle(ButtonStyle.Secondary)
+      .setEmoji('✖️');
 
     return new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
       cancel,

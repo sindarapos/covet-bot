@@ -6,19 +6,20 @@ import {
   ButtonStyle,
   ChatInputCommandInteraction,
   InteractionEditReplyOptions,
-  userMention,
 } from 'discord.js';
-import { GameModel } from '../configuration/models/game.model';
 import {
   autocompleteGames,
   ButtonCustomIds,
   generateEmptyGameListContent,
   generateGameEmbeds,
 } from '../utils/gameUtils';
-import { isEmptyGameList } from '../services/gameService';
+import {
+  destroyGameByName,
+  findGameByName,
+  isEmptyGameList,
+} from '../services/gameService';
 import { MessageActionRowComponentBuilder } from '@discordjs/builders';
 import { generateInitiatorMessageComponentCollector } from '../utils/commandUtils';
-import { deleteGame } from './deleteGame';
 
 const options: Command['options'] = [
   {
@@ -30,27 +31,17 @@ const options: Command['options'] = [
   },
 ];
 
-const generateContent = (game: GameModel | undefined | null, query: string): string => {
-  if (!game) {
-    `The game ${bold(query)} has not yet been coveted!`;
-  }
-
-  return 'There you go!';
+const generateContent = (): string => {
+  return `Are you sure you want to remove this game?\n\r:warning: This will remove the game for everyone on the server!`;
 };
 
-const generateGameViewActionRow =
+const generateGameDeleteActionRow =
   (): ActionRowBuilder<MessageActionRowComponentBuilder> => {
-    const share = new ButtonBuilder()
-      .setCustomId(ButtonCustomIds.share)
-      .setLabel('Broadcast')
-      .setStyle(ButtonStyle.Primary)
-      .setEmoji('📢');
-
-    const edit = new ButtonBuilder()
-      .setCustomId(ButtonCustomIds.edit)
-      .setLabel('Edit')
-      .setStyle(ButtonStyle.Primary)
-      .setEmoji('📝');
+    const cancel = new ButtonBuilder()
+      .setCustomId(ButtonCustomIds.cancel)
+      .setLabel('Cancel')
+      .setStyle(ButtonStyle.Secondary)
+      .setEmoji('✖️');
 
     const remove = new ButtonBuilder()
       .setCustomId(ButtonCustomIds.delete)
@@ -59,9 +50,8 @@ const generateGameViewActionRow =
       .setEmoji('🔥');
 
     return new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
+      cancel,
       remove,
-      edit,
-      share,
     );
   };
 
@@ -69,15 +59,20 @@ const generateReply = async (
   interaction: ChatInputCommandInteraction,
 ): Promise<InteractionEditReplyOptions> => {
   const name = interaction.options.get('name')?.value ?? 'unknown';
-  const game = await GameModel.findOne({
-    where: { name },
-    include: { all: true, nested: true },
-  });
+  const game = await findGameByName(name.toString());
 
-  const content = generateContent(game, name.toString());
+  if (!game) {
+    return {
+      content: `The game ${bold(name.toString())} has not yet been coveted!`,
+      embeds: [],
+      components: [],
+    };
+  }
+
+  const content = generateContent();
   const embeds = generateGameEmbeds([game]);
   const components: InteractionEditReplyOptions['components'] = [
-    generateGameViewActionRow(),
+    generateGameDeleteActionRow(),
   ];
   return {
     content,
@@ -88,10 +83,12 @@ const generateReply = async (
 
 const run: Command['run'] = async (interaction) => {
   // Initial answer (to prevent timeout)
-  await interaction.reply({
-    ephemeral: true,
-    content: 'Fetching the game list ...',
-  });
+  if (!interaction.replied) {
+    await interaction.reply({
+      ephemeral: true,
+      content: 'Fetching the game list ...',
+    });
+  }
 
   if (await isEmptyGameList()) {
     await interaction.editReply(await generateEmptyGameListContent(interaction));
@@ -107,34 +104,30 @@ const run: Command['run'] = async (interaction) => {
   );
 
   switch (buttonInteraction.customId) {
-    case ButtonCustomIds.share:
-      await interaction.deleteReply(message);
-      await buttonInteraction.reply({
-        ...reply,
-        content: `Hey everyone, ${userMention(
-          interaction.user.id,
-        )} wants to let you know about:`,
-        components: [],
-      });
-      break;
-    case ButtonCustomIds.edit:
+    case ButtonCustomIds.cancel:
       await buttonInteraction.update({
-        content: 'Sorry :cry:! This feature is not yet implemented.',
+        content: `Ok, nothing has been removed.`,
         components: [],
         embeds: [],
       });
       break;
     default:
-    case ButtonCustomIds.delete:
-      await buttonInteraction.update({});
-      await deleteGame.run(interaction);
+    case ButtonCustomIds.delete: {
+      const name = interaction.options.get('name')?.value?.toString() ?? 'unknown';
+      await destroyGameByName(name);
+      await buttonInteraction.update({
+        content: `The game ${name} has been removed.`,
+        components: [],
+        embeds: [],
+      });
       break;
+    }
   }
 };
 
-export const viewGame: Command = {
-  name: CommandName.ViewGame,
-  description: 'View a specific coveted game.',
+export const deleteGame: Command = {
+  name: CommandName.DeleteGame,
+  description: 'Remove a coveted game.',
   options,
   autocomplete: autocompleteGames,
   run,
