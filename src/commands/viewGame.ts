@@ -10,14 +10,15 @@ import {
 } from 'discord.js';
 import { GameModel } from '../configuration/models/game.model';
 import {
+  autocompleteGames,
   ButtonCustomIds,
   generateEmptyGameListContent,
   generateGameEmbeds,
 } from '../utils/gameUtils';
-import { Op } from 'sequelize';
 import { isEmptyGameList } from '../services/gameService';
 import { MessageActionRowComponentBuilder } from '@discordjs/builders';
 import { generateInitiatorMessageComponentCollector } from '../utils/commandUtils';
+import { deleteGame } from './deleteGame';
 
 const options: Command['options'] = [
   {
@@ -125,40 +126,16 @@ const run: Command['run'] = async (interaction) => {
       break;
     default:
     case ButtonCustomIds.delete:
-      await buttonInteraction.update({
-        content: 'Sorry :cry:! This feature is not yet implemented.',
-        components: [],
-        embeds: [],
-      });
+      await buttonInteraction.update({});
+      await deleteGame.run(interaction);
       break;
   }
-};
-
-const autocomplete: Command['autocomplete'] = async (interaction) => {
-  const focussedValue = interaction.options.getFocused();
-  const games = await GameModel.findAll({
-    where: {
-      [Op.or]: [
-        { name: { [Op.iLike]: `${focussedValue}%` } },
-        { name: { [Op.iLike]: `%${focussedValue}%` } },
-      ],
-    },
-    include: { all: true, nested: true },
-  });
-
-  const autocompleteOptions = games.slice(0, 20).map(({ name }) => {
-    return {
-      name: name,
-      value: name,
-    };
-  });
-  await interaction.respond(autocompleteOptions);
 };
 
 export const viewGame: Command = {
   name: CommandName.ViewGame,
   description: 'View a specific coveted game.',
   options,
-  autocomplete,
+  autocomplete: autocompleteGames,
   run,
 };

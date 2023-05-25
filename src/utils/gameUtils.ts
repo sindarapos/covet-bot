@@ -4,9 +4,9 @@ import { GameModel } from '../configuration/models/game.model';
 import { CategoryModel } from '../configuration/models/category.model';
 import { hideLinkEmbed } from '@discordjs/formatters';
 import { generateChatInputApplicationMention } from './stringUtils';
-import { CommandName } from '../Command';
+import { Command, CommandName } from '../Command';
 import moment from 'moment';
-import { isEmptyGameList } from '../services/gameService';
+import { findAllGamesByName, isEmptyGameList } from '../services/gameService';
 
 export const enum ButtonCustomIds {
   confirm = 'confirm',
@@ -159,4 +159,17 @@ export const handleEmptyGameCount = async <T extends () => ReturnType<T>>(
   }
 
   return fn();
+};
+
+export const autocompleteGames: Command['autocomplete'] = async (interaction) => {
+  const focussedValue = interaction.options.getFocused();
+  const games = await findAllGamesByName(focussedValue);
+
+  const autocompleteOptions = games.slice(0, 20).map(({ name }) => {
+    return {
+      name: name,
+      value: name,
+    };
+  });
+  await interaction.respond(autocompleteOptions);
 };
