@@ -49,14 +49,14 @@ const generateGameViewActionRow =
     const edit = new ButtonBuilder()
       .setCustomId(ButtonCustomIds.edit)
       .setLabel('Edit')
-      .setStyle(ButtonStyle.Secondary)
+      .setStyle(ButtonStyle.Primary)
       .setEmoji('📝');
 
     const remove = new ButtonBuilder()
       .setCustomId(ButtonCustomIds.delete)
       .setLabel('Remove')
       .setStyle(ButtonStyle.Danger)
-      .setEmoji('✖️');
+      .setEmoji('🔥');
 
     return new ActionRowBuilder<MessageActionRowComponentBuilder>().addComponents(
       remove,
