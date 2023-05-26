@@ -1,5 +1,6 @@
 import { GameModel } from '../configuration/models/game.model';
 import { Op } from 'sequelize';
+import { sequelize } from '../configuration/database';
 
 export const isEmptyGameList = async (): Promise<boolean> => {
   const gameCount = await GameModel.count();
@@ -20,6 +21,12 @@ export const findAllGamesByName = async (filter: GameModel['name']) =>
 export const findGameByName = async (filter: GameModel['name']) =>
   await GameModel.findOne({
     where: { name: filter },
+    include: { all: true, nested: true },
+  });
+
+export const findRandomGame = async () =>
+  await GameModel.findOne({
+    order: sequelize.random(),
     include: { all: true, nested: true },
   });
 
