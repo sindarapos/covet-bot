@@ -1,8 +1,17 @@
-import { Client, ClientApplication, ClientUser } from 'discord.js';
+import {
+  Client,
+  ClientApplication,
+  ClientUser,
+  Events,
+  TextBasedChannel,
+} from 'discord.js';
 import { commands } from '../Command';
 import { initModels, sequelize } from '../configuration/database';
 import { GameModel } from '../configuration/models/game.model';
 import { UserModel } from '../configuration/models/user.model';
+import moment from 'moment';
+import { findRandomGame } from '../services/gameService';
+import { generateGameEmbeds } from '../utils/gameUtils';
 
 const syncDatabaseModels = async () => {
   console.log('Initializing models ...');
@@ -56,10 +65,77 @@ const initCommands = async (client: Client) => {
   }
 };
 
+const initNotificationPolling = async (client: Client) => {
+  // find time until next message
+  const now = moment();
+  const triggerMoment = moment('9:50', 'HH:mm');
+  if (triggerMoment.isBefore(now)) {
+    triggerMoment.add(1, 'day');
+  }
+  const duration = triggerMoment.diff(now);
+
+  console.log('Setting notification to trigger in', triggerMoment.fromNow());
+
+  // fetch all channels that should receive game announcements
+  const oAuth2Guilds = await client.guilds.fetch();
+  const guilds = await Promise.all(
+    oAuth2Guilds.map(async (oAuth2Guild) => oAuth2Guild.fetch()),
+  );
+  const allGuildChannels = await Promise.all(
+    guilds.map(({ channels }) => channels.fetch()),
+  );
+  const announcementChannels = allGuildChannels.reduce<TextBasedChannel[]>(
+    (accumulator, channels) => {
+      const channel = channels.find(
+        (channel) => channel?.name.toLowerCase() === 'game-announcements',
+      );
+      if (!channel?.isTextBased()) {
+        return accumulator;
+      }
+      accumulator.push(channel);
+      return accumulator;
+    },
+    [],
+  );
+
+  console.log(
+    'list of channels that should receive an announcement',
+    announcementChannels,
+  );
+
+  // set up the timer
+  setTimeout(async () => {
+    if (announcementChannels.length === 0) {
+      return initNotificationPolling(client);
+    }
+
+    // send a random game
+    const game = await findRandomGame();
+    const embeds = generateGameEmbeds([game]);
+
+    await Promise.all(
+      announcementChannels.map(async ({ id }) => {
+        const channel = await client.channels.fetch(id);
+        if (!channel?.isTextBased()) {
+          return;
+        }
+        return channel.send({
+          content: 'A random game for you today!',
+          embeds,
+        });
+      }),
+    );
+
+    // set the timer again
+    await initNotificationPolling(client);
+  }, duration);
+};
+
 export const ready = (client: Client) => {
-  client.on('ready', async () => {
+  client.on(Events.ClientReady, async () => {
     await checkDatabaseConnection();
     await syncDatabaseModels();
     await initCommands(client);
+    await initNotificationPolling(client);
   });
 };
