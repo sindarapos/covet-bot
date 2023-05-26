@@ -1,24 +1,4 @@
-import {
-  Channel,
-  Client,
-  GuildBasedChannel,
-  Snowflake,
-  TextBasedChannel,
-} from 'discord.js';
-
-const channelByGuildChannel = async (
-  client: Client,
-  guildChannel?: GuildBasedChannel | null,
-): Promise<TextBasedChannel | undefined> => {
-  if (!guildChannel) {
-    return;
-  }
-  const channel = await client.channels.fetch(guildChannel.id);
-  if (!channel?.isTextBased()) {
-    return;
-  }
-  return channel;
-};
+import { Channel, Client, TextBasedChannel } from 'discord.js';
 
 export async function channelsByName(client: Client, channelName = 'game-announcements') {
   const oAuth2Guilds = await client.guilds.fetch();
