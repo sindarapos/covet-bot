@@ -1,10 +1,4 @@
-import {
-  Client,
-  ClientApplication,
-  ClientUser,
-  Events,
-  TextBasedChannel,
-} from 'discord.js';
+import { Client, ClientApplication, ClientUser, Events } from 'discord.js';
 import { commands } from '../Command';
 import { initModels, sequelize } from '../configuration/database';
 import { GameModel } from '../configuration/models/game.model';
@@ -12,6 +6,7 @@ import { UserModel } from '../configuration/models/user.model';
 import moment from 'moment';
 import { findRandomGame } from '../services/gameService';
 import { generateGameEmbeds } from '../utils/gameUtils';
+import { channelsByName } from '../utils/channelUtils';
 
 const syncDatabaseModels = async () => {
   console.log('Initializing models ...');
@@ -65,38 +60,23 @@ const initCommands = async (client: Client) => {
   }
 };
 
-const initNotificationPolling = async (client: Client) => {
-  // find time until next message
+const dailyTriggerMoment = (time: string, format = 'HH:mm') => {
   const now = moment();
-  const triggerMoment = moment('9:50', 'HH:mm');
+  const triggerMoment = moment(time, format);
   if (triggerMoment.isBefore(now)) {
     triggerMoment.add(1, 'day');
   }
   const duration = triggerMoment.diff(now);
+  return { triggerMoment, duration };
+};
 
+const initNotificationPolling = async (client: Client) => {
+  // find time until next message
+  const { triggerMoment, duration } = dailyTriggerMoment('9:50');
   console.log('Setting notification to trigger in', triggerMoment.fromNow());
 
   // fetch all channels that should receive game announcements
-  const oAuth2Guilds = await client.guilds.fetch();
-  const guilds = await Promise.all(
-    oAuth2Guilds.map(async (oAuth2Guild) => oAuth2Guild.fetch()),
-  );
-  const allGuildChannels = await Promise.all(
-    guilds.map(({ channels }) => channels.fetch()),
-  );
-  const announcementChannels = allGuildChannels.reduce<TextBasedChannel[]>(
-    (accumulator, channels) => {
-      const channel = channels.find(
-        (channel) => channel?.name.toLowerCase() === 'game-announcements',
-      );
-      if (!channel?.isTextBased()) {
-        return accumulator;
-      }
-      accumulator.push(channel);
-      return accumulator;
-    },
-    [],
-  );
+  const announcementChannels = await channelsByName(client);
 
   console.log(
     'list of channels that should receive an announcement',
@@ -114,12 +94,8 @@ const initNotificationPolling = async (client: Client) => {
     const embeds = generateGameEmbeds([game]);
 
     await Promise.all(
-      announcementChannels.map(async ({ id }) => {
-        const channel = await client.channels.fetch(id);
-        if (!channel?.isTextBased()) {
-          return;
-        }
-        return channel.send({
+      announcementChannels.map(async ({ send }) => {
+        return send({
           content: 'A random game for you today!',
           embeds,
         });
