@@ -1,4 +1,4 @@
-import { isSteamAppList, SteamApp } from '../SteamApp';
+import { isSteamAppList, isSteamAppResponse, SteamApp } from '../SteamApp';
 import {
   isSteamAppDetailResponse,
   SteamAppDetail,
@@ -8,8 +8,32 @@ import { isRecord } from '../Record';
 import camelcaseKeys from 'camelcase-keys';
 import { throttle } from '../utils/functionUtils';
 import Fuse from 'fuse.js';
+import * as process from 'process';
+import moment from 'moment';
 
-export const fetchSteamApps = async (): Promise<SteamApp[]> => {
+export const fetchSteamApps = async (startId = 0): Promise<SteamApp[]> => {
+  const response = await fetch(
+    `https://api.steampowered.com/IStoreService/GetAppList/v1/?key=${process.env.STEAM_API_KEY}&last_appid=${startId}&max_results=40000`,
+  );
+  const data = (await response.json()) as unknown;
+  if (!isRecord(data)) {
+    return [];
+  }
+
+  const camelCasedData: unknown = camelcaseKeys(data, { deep: true });
+  if (!isSteamAppResponse(camelCasedData)) {
+    return [];
+  }
+
+  const { apps, haveMoreResults, lastAppid } = camelCasedData.response;
+  if (!haveMoreResults || !lastAppid) {
+    return apps;
+  }
+  const nextApps = await fetchSteamApps(lastAppid);
+  return apps.concat(nextApps);
+};
+
+export const fetchPublicSteamApps = async (): Promise<SteamApp[]> => {
   try {
     const response = await fetch(
       'https://api.steampowered.com/ISteamApps/GetAppList/v0002/?format=json',
@@ -35,21 +59,37 @@ export const steamAppDetailBySteamAppDetailResponse = (
   return data;
 };
 
-export const querySteamApps = (apps: SteamApp[], query: string): SteamApp[] => {
-  const fuse = new Fuse(apps, {
+const generateSteamAppFuse = (apps: SteamApp[]): Fuse<SteamApp> =>
+  new Fuse(apps, {
     keys: ['name'],
     shouldSort: true,
     findAllMatches: true,
     threshold: 0.1,
   });
+
+const throttledGenerateSteamAppFuse = throttle(
+  generateSteamAppFuse,
+  moment.duration(4, 'hours').asMilliseconds(),
+);
+
+export const querySteamApps = (apps: SteamApp[], query: string): SteamApp[] => {
+  const fuse = throttledGenerateSteamAppFuse(apps);
   return fuse.search(query).map((fuseResult) => fuseResult.item);
 };
 
 // Cache fetching of Steam app list
-const throttledFetchSteamApps = throttle(fetchSteamApps, 60000);
+const throttledFetchSteamApps = throttle(
+  fetchSteamApps,
+  moment.duration(4, 'hours').asMilliseconds(),
+);
+
 export const findSteamApps = async (query: string): Promise<SteamApp[]> => {
-  const apps = await throttledFetchSteamApps();
-  return querySteamApps(apps, query);
+  try {
+    const apps = await throttledFetchSteamApps();
+    return querySteamApps(apps, query);
+  } catch (e) {
+    throw new Error(`I ran into an error fetching steam games: ${e}`);
+  }
 };
 
 export const findSteamAppDetails = async (

@@ -39,12 +39,12 @@ export const generateGameEmbed = (
       shortDescription,
       headerImage,
       releaseDate: { date, comingSoon },
-      priceOverview: { finalFormatted },
+      priceOverview,
     } = content;
     description = shortDescription;
     image = headerImage;
     releaseDate = comingSoon ? 'coming soon' : date;
-    price = finalFormatted;
+    price = priceOverview?.finalFormatted ?? 'N/A';
     owner = 'Steam';
   } else {
     description = content.description;
@@ -58,7 +58,7 @@ export const generateGameEmbed = (
   }
 
   return new EmbedBuilder()
-    .setTitle(`${name} ${icons}`)
+    .setTitle(`${name} ${icons ?? ''}`)
     .setDescription(description)
     .setImage(image ?? null)
     .setFields(
