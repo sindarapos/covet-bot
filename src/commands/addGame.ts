@@ -56,7 +56,7 @@ const handleConfirm = async (
     releaseDate: { date },
     shortDescription,
     steamAppid,
-    priceOverview: { final },
+    priceOverview,
   }: SteamAppDetail,
 ): Promise<InteractionResponse> => {
   // upsert user
@@ -66,13 +66,14 @@ const handleConfirm = async (
   });
 
   // create a new game
+  const price = priceOverview?.final ? priceOverview.final / 100 : undefined;
   const [game] = await GameModel.upsert({
     name,
     description: shortDescription,
     image: headerImage,
     releaseDate: new Date(date),
     steamAppid,
-    price: final / 100,
+    price,
   });
 
   // define associations

@@ -32,7 +32,7 @@ export interface SteamAppDetail extends Omit<SteamApp, 'appid'> {
   genres: SteamAppGenre[];
   categories: SteamAppCategory[];
   releaseDate: SteamAppReleaseDate;
-  priceOverview: SteamAppPriceOverview;
+  priceOverview?: SteamAppPriceOverview;
 }
 
 export type SteamAppDetailResponse = Record<
@@ -43,7 +43,7 @@ export type SteamAppDetailResponse = Record<
   }
 >;
 
-function isSteamAppPriceOverview<T extends Record<keyof T, T>>(
+export function isSteamAppPriceOverview<T extends Record<keyof T, T>>(
   element: unknown,
 ): element is SteamAppPriceOverview {
   if (
@@ -116,7 +116,6 @@ export function isSteamAppDetail<T extends Record<keyof T, T>>(
       'shortDescription',
       'type',
       'website',
-      'priceOverview',
       'genres',
       'categories',
     ] as const)
@@ -124,7 +123,7 @@ export function isSteamAppDetail<T extends Record<keyof T, T>>(
     return false;
   }
 
-  const { releaseDate, priceOverview, genres, categories } = element;
+  const { releaseDate, genres, categories } = element;
 
   if (!isSteamAppReleaseDate(releaseDate)) {
     return false;
@@ -134,17 +133,14 @@ export function isSteamAppDetail<T extends Record<keyof T, T>>(
     return false;
   }
 
-  if (!isSteamAppCategories(categories)) {
-    return false;
-  }
-
-  return isSteamAppPriceOverview(priceOverview);
+  return isSteamAppCategories(categories);
 }
 
 export function isSteamAppDetailResponse<T extends Record<keyof T, T>>(
   element: unknown,
 ): element is SteamAppDetailResponse {
   if (!isRecord(element)) {
+    console.log('is not a record');
     return false;
   }
   const values = Object.values(element);
