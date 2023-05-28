@@ -1,4 +1,4 @@
-export const throttle = <R, A extends never[]>(
+export const throttle = <R, A extends unknown[]>(
   func: (...args: A) => R,
   wait: number,
 ): ((...args: A) => R) => {
