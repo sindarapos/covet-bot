@@ -4,7 +4,7 @@ import { initModels, sequelize } from '../configuration/database';
 import { GameModel } from '../configuration/models/game.model';
 import { UserModel } from '../configuration/models/user.model';
 import moment from 'moment';
-import { findRandomGame } from '../services/gameService';
+import { findGamesByReleaseDate } from '../services/gameService';
 import { generateGameEmbeds } from '../utils/gameUtils';
 import { channelsByName } from '../utils/channelUtils';
 
@@ -70,41 +70,37 @@ const dailyTriggerMoment = (time: string, format = 'HH:mm') => {
   return { triggerMoment, duration };
 };
 
-const initNotificationPolling = async (client: Client) => {
+const initNotificationPolling = (client: Client) => {
   // find time until next message
-  const { triggerMoment, duration } = dailyTriggerMoment('9:50');
-  console.log('Setting notification to trigger in', triggerMoment.fromNow());
-
-  // fetch all channels that should receive game announcements
-  const announcementChannels = await channelsByName(client);
-
-  console.log(
-    'list of channels that should receive an announcement',
-    announcementChannels,
-  );
+  const { triggerMoment, duration } = dailyTriggerMoment('19:33');
+  console.log('Setting notification to trigger', triggerMoment.fromNow());
 
   // set up the timer
-  setTimeout(async () => {
-    if (announcementChannels.length === 0) {
-      return initNotificationPolling(client);
-    }
+  setTimeout(
+    async (bla) => {
+      // fetch all channels that should receive game announcements
+      const announcementChannels = await channelsByName(client);
 
-    // send a random game
-    const game = await findRandomGame();
-    const embeds = generateGameEmbeds([game]);
+      // send a random game
+      const endOfToday = moment().endOf('day').toDate();
+      const games = await findGamesByReleaseDate(endOfToday, 14);
+      const embeds = generateGameEmbeds(games);
 
-    await Promise.all(
-      announcementChannels.map(async ({ send }) => {
-        return send({
-          content: 'A random game for you today!',
-          embeds,
-        });
-      }),
-    );
+      await Promise.all(
+        announcementChannels.map(async (channel) => {
+          return channel.send({
+            content: 'These games will be released within the next 900 days',
+            embeds,
+          });
+        }),
+      );
 
-    // set the timer again
-    await initNotificationPolling(client);
-  }, duration);
+      // set the timer again
+      initNotificationPolling(bla);
+    },
+    duration,
+    client,
+  );
 };
 
 export const ready = (client: Client) => {
@@ -112,6 +108,6 @@ export const ready = (client: Client) => {
     await checkDatabaseConnection();
     await syncDatabaseModels();
     await initCommands(client);
-    await initNotificationPolling(client);
+    initNotificationPolling(client);
   });
 };
