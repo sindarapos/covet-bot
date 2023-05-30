@@ -64,7 +64,8 @@ const generateSteamAppFuse = (apps: SteamApp[]): Fuse<SteamApp> =>
     keys: ['name'],
     shouldSort: true,
     findAllMatches: true,
-    threshold: 0.1,
+    ignoreLocation: true,
+    isCaseSensitive: false,
   });
 
 const throttledGenerateSteamAppFuse = throttle(
