@@ -7,6 +7,7 @@ import moment from 'moment';
 import { findGamesByReleaseDate } from '../services/gameService';
 import { generateGameEmbeds } from '../utils/gameUtils';
 import { channelsByName } from '../utils/channelUtils';
+import { findSteamApps } from '../services/steamService';
 
 const syncDatabaseModels = async () => {
   console.log('Initializing models ...');
@@ -70,37 +71,48 @@ const dailyTriggerMoment = (time: string, format = 'HH:mm') => {
   return { triggerMoment, duration };
 };
 
+const handleGameAnnouncement = (client: Client) => async () => {
+  const announce = async () => {
+    // fetch all channels that should receive game announcements
+    const announcementChannels = await channelsByName(client);
+
+    // send a random game
+    const endOfToday = moment().endOf('day').toDate();
+    const games = await findGamesByReleaseDate(endOfToday);
+    const embeds = generateGameEmbeds(games);
+
+    await Promise.all(
+      announcementChannels.map(async (channel) => {
+        return channel.send({
+          content: 'These games will be released within the next 900 days',
+          embeds,
+        });
+      }),
+    );
+  };
+
+  try {
+    await announce();
+    initNotificationPolling(client);
+  } catch (e) {
+    console.log('Something went wrong', e);
+  }
+};
+
 const initNotificationPolling = (client: Client) => {
   // find time until next message
-  const { triggerMoment, duration } = dailyTriggerMoment('19:33');
+  const { triggerMoment, duration } = dailyTriggerMoment('09:35');
   console.log('Setting notification to trigger', triggerMoment.fromNow());
 
-  // set up the timer
-  setTimeout(
-    async (bla) => {
-      // fetch all channels that should receive game announcements
-      const announcementChannels = await channelsByName(client);
+  // setup game announcement timer
+  setTimeout(handleGameAnnouncement(client), duration);
+};
 
-      // send a random game
-      const endOfToday = moment().endOf('day').toDate();
-      const games = await findGamesByReleaseDate(endOfToday, 14);
-      const embeds = generateGameEmbeds(games);
-
-      await Promise.all(
-        announcementChannels.map(async (channel) => {
-          return channel.send({
-            content: 'These games will be released within the next 900 days',
-            embeds,
-          });
-        }),
-      );
-
-      // set the timer again
-      initNotificationPolling(bla);
-    },
-    duration,
-    client,
-  );
+const initFetchingSteamAppList = async () => {
+  // setup steam game list fetch timer
+  const games = await findSteamApps('');
+  console.log('Preloaded', games.length, 'games');
+  setTimeout(initFetchingSteamAppList, moment.duration(1, 'hour').asMilliseconds());
 };
 
 export const ready = (client: Client) => {
@@ -108,6 +120,7 @@ export const ready = (client: Client) => {
     await checkDatabaseConnection();
     await syncDatabaseModels();
     await initCommands(client);
+    await initFetchingSteamAppList();
     initNotificationPolling(client);
   });
 };
