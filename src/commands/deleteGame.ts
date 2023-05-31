@@ -103,7 +103,7 @@ const run: Command['run'] = async (interaction) => {
     interaction,
   );
 
-  switch (buttonInteraction.customId) {
+  switch (buttonInteraction?.customId) {
     case ButtonCustomIds.cancel:
       await buttonInteraction.update({
         content: `Ok, nothing has been removed.`,
@@ -111,7 +111,6 @@ const run: Command['run'] = async (interaction) => {
         embeds: [],
       });
       break;
-    default:
     case ButtonCustomIds.delete: {
       const name = interaction.options.get('name')?.value?.toString() ?? 'unknown';
       await destroyGameByName(name);
