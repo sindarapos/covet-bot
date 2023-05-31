@@ -106,7 +106,7 @@ const run: Command['run'] = async (interaction) => {
     interaction,
   );
 
-  switch (buttonInteraction.customId) {
+  switch (buttonInteraction?.customId) {
     case ButtonCustomIds.share:
       await interaction.deleteReply(message);
       await buttonInteraction.reply({
@@ -124,7 +124,6 @@ const run: Command['run'] = async (interaction) => {
         embeds: [],
       });
       break;
-    default:
     case ButtonCustomIds.delete:
       await buttonInteraction.update({});
       await deleteGame.run(interaction);

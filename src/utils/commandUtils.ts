@@ -6,6 +6,7 @@ import {
   CommandInteraction,
   Message,
 } from 'discord.js';
+import moment from 'moment';
 
 export const findCommandByName = (name: string) => {
   return commands.find((command) => command.name.valueOf() === name.valueOf());
@@ -24,9 +25,16 @@ export const logCommand = (interaction: CommandInteraction | AutocompleteInterac
 export const generateInitiatorMessageComponentCollector = async (
   message: Message,
   interaction: ChatInputCommandInteraction,
-): Promise<ButtonInteraction> => {
-  return await message.awaitMessageComponent<2>({
-    filter: (i) => i.user.id === interaction.user.id,
-    time: 300000,
-  });
+): Promise<ButtonInteraction | undefined> => {
+  const time = moment.duration(1, 'minutes').asMilliseconds();
+  return await message
+    .awaitMessageComponent<2>({
+      filter: (i) => i.user.id === interaction.user.id,
+      time,
+    })
+    .catch(async () => {
+      console.log('No interactions have been received after', time, 'ms');
+      await interaction.deleteReply(message);
+      return undefined;
+    });
 };

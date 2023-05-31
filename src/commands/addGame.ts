@@ -105,14 +105,13 @@ const handleInteractionResponse = async (
   interaction: ChatInputCommandInteraction,
   message: Message,
   details: SteamAppDetail,
-): Promise<InteractionResponse> => {
+): Promise<InteractionResponse | undefined> => {
   const confirm = await generateInitiatorMessageComponentCollector(message, interaction);
-  switch (confirm.customId) {
+  switch (confirm?.customId) {
     case ButtonCustomIds.confirm:
       return handleConfirm(confirm, details);
     case ButtonCustomIds.edit:
       return handleEdit(confirm);
-    default:
     case ButtonCustomIds.cancel:
       return handleCancel(confirm, details);
   }
