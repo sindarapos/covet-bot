@@ -7,9 +7,9 @@ import {
 import { isRecord } from '../Record';
 import camelcaseKeys from 'camelcase-keys';
 import { throttle } from '../utils/functionUtils';
-import Fuse from 'fuse.js';
 import * as process from 'process';
 import moment from 'moment';
+import MiniSearch from 'minisearch';
 
 export const fetchSteamApps = async (startId = 0): Promise<SteamApp[]> => {
   const response = await fetch(
@@ -59,23 +59,27 @@ export const steamAppDetailBySteamAppDetailResponse = (
   return data;
 };
 
-const generateSteamAppFuse = (apps: SteamApp[]): Fuse<SteamApp> =>
-  new Fuse(apps, {
-    keys: ['name'],
-    shouldSort: true,
-    findAllMatches: true,
-    ignoreLocation: true,
-    isCaseSensitive: false,
+const generateSteamAppMiniSearch = (apps: SteamApp[]): MiniSearch<SteamApp> => {
+  const miniSearch = new MiniSearch<SteamApp>({
+    fields: ['name'],
+    storeFields: ['name', 'appid'],
+    idField: 'appid',
   });
+  miniSearch.addAll(apps);
+  return miniSearch;
+};
 
-const throttledGenerateSteamAppFuse = throttle(
-  generateSteamAppFuse,
+const throttledGenerateSteamAppMiniSearch = throttle(
+  generateSteamAppMiniSearch,
   moment.duration(4, 'hours').asMilliseconds(),
 );
 
 export const querySteamApps = (apps: SteamApp[], query: string): SteamApp[] => {
-  const fuse = throttledGenerateSteamAppFuse(apps);
-  return fuse.search(query).map((fuseResult) => fuseResult.item);
+  const miniSearch = throttledGenerateSteamAppMiniSearch(apps);
+  return miniSearch.search(query).map(({ appid, name }) => ({
+    appid: appid as number,
+    name: name as string,
+  }));
 };
 
 // Cache fetching of Steam app list
