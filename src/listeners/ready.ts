@@ -84,7 +84,7 @@ const handleGameAnnouncement = (client: Client) => async () => {
     await Promise.all(
       announcementChannels.map(async (channel) => {
         return channel.send({
-          content: 'These games will be released within the next 900 days',
+          content: 'These games will be released soon:',
           embeds,
         });
       }),
