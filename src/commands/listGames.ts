@@ -1,9 +1,10 @@
 import { Command, CommandName } from '../Command';
-import { GameModel } from '../configuration/models/game.model';
 import { ChatInputCommandInteraction } from 'discord.js';
-import { generateGameList, handleEmptyGameCount } from '../utils/gameUtils';
+import { generateGameEmbeds } from '../utils/gameUtils';
 import { GenreModel } from '../configuration/models/genre.model';
-import { Includeable, Op } from 'sequelize';
+import { Op } from 'sequelize';
+import { pagination, PaginationOptions } from '@devraelfreeze/discordjs-pagination';
+import { findGamesByGenre } from '../services/gameService';
 
 const options: Command['options'] = [
   {
@@ -15,48 +16,26 @@ const options: Command['options'] = [
   },
 ];
 
-const generateGameContent = async (
+const generatePaginationOptions = async (
   interaction: ChatInputCommandInteraction,
-): Promise<string> => {
+): Promise<PaginationOptions> => {
   const genre = interaction.options.get('genre')?.value;
-  const genresFilterInclude: Includeable[] = genre
-    ? [
-        {
-          model: GenreModel,
-          where: { description: genre },
-          as: 'genresFilter',
-        },
-      ]
-    : [];
-
-  // multiple games found
-  const games = await GameModel.findAll({
-    order: [['releaseDate', 'DESC']],
-    include: ['genres', 'owners', 'categories', ...genresFilterInclude],
-  });
-
-  return `I've found ${games.length} games that have been coveted:\n\r${generateGameList(
-    games,
-  )}`;
-};
-
-const generateContent = async (
-  interaction: ChatInputCommandInteraction,
-): Promise<string> => {
-  return handleEmptyGameCount(interaction, () => generateGameContent(interaction));
+  const games = await findGamesByGenre(genre);
+  const embeds = generateGameEmbeds(games).map((builder) => builder.toJSON());
+  return {
+    ephemeral: true,
+    embeds,
+    interaction,
+    author: interaction.user,
+  };
 };
 
 const run: Command['run'] = async (interaction) => {
   // Initial answer (to prevent timeout)
-  await interaction.reply({
-    ephemeral: true,
-    content: 'Fetching the game list ...',
-  });
+  await interaction.deferReply();
 
-  const content = await generateContent(interaction);
-  await interaction.editReply({
-    content,
-  });
+  const paginationOptions = await generatePaginationOptions(interaction);
+  await pagination(paginationOptions);
 };
 
 const autocomplete: Command['autocomplete'] = async (interaction) => {
