@@ -1,7 +1,8 @@
 import { GameModel } from '../configuration/models/game.model';
-import { Op } from 'sequelize';
+import { Includeable, Op } from 'sequelize';
 import { sequelize } from '../configuration/database';
 import moment from 'moment';
+import { GenreModel } from '../configuration/models/genre.model';
 
 export const isEmptyGameList = async (): Promise<boolean> => {
   const gameCount = await GameModel.count();
@@ -24,6 +25,24 @@ export const findGameByName = async (filter: GameModel['name']) =>
     where: { name: filter },
     include: { all: true, nested: true },
   });
+
+export const findGamesByGenre = async (filter?: string | number | boolean) => {
+  const genresFilterInclude: Includeable[] = filter
+    ? [
+        {
+          model: GenreModel,
+          where: { description: filter },
+          as: 'genresFilter',
+        },
+      ]
+    : [];
+
+  // multiple games found
+  return await GameModel.findAll({
+    order: [['releaseDate', 'DESC']],
+    include: ['genres', 'owners', 'categories', ...genresFilterInclude],
+  });
+};
 
 export const findRandomGame = async () =>
   await GameModel.findOne({
