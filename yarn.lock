@@ -214,6 +214,13 @@
   dependencies:
     "@jridgewell/trace-mapping" "0.3.9"
 
+"@devraelfreeze/discordjs-pagination@^2.7.4":
+  version "2.7.4"
+  resolved "https://registry.yarnpkg.com/@devraelfreeze/discordjs-pagination/-/discordjs-pagination-2.7.4.tgz#41e11b7efc0a7578df61fe6e0fb6d86d7d36ad12"
+  integrity sha512-2J5xvF4HJSjlHyzksEeMHHAV4tWJFiWcNYCpjlHfG2xEtTiqclyYA8QGAil3UUNNvk29XBP6xr6Hx8TK0+fWiQ==
+  dependencies:
+    discord.js "^14.9.0"
+
 "@discordjs/builders@^1.6.0":
   version "1.6.1"
   resolved "https://registry.yarnpkg.com/@discordjs/builders/-/builders-1.6.1.tgz#5b1447cfa493bc1306671ef18ce3aae13c0af0ba"
