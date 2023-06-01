@@ -4,7 +4,8 @@
   "description": "Discord bot for sharing keeping track of upcoming games",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "ts-node src/app.ts"
+    "start": "ts-node src/app.ts",
+    "postinstall": "patch-package"
   },
   "author": "",
   "license": "ISC",
@@ -15,8 +16,10 @@
     "dotenv": "^16.0.3",
     "minisearch": "^6.1.0",
     "moment": "^2.29.4",
+    "patch-package": "^7.0.0",
     "pg": "^8.10.0",
     "pg-hstore": "^2.3.4",
+    "postinstall-postinstall": "^2.1.0",
     "prettier": "^2.8.8",
     "reflect-metadata": "^0.1.13",
     "sequelize": "^6.31.1",
